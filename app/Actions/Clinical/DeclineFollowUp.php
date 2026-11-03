@@ -22,29 +22,35 @@ class DeclineFollowUp
             throw new AuthorizationException('رد پیگیری برای این نقش مجاز نیست.');
         }
 
-        if (! $followUp->status->canBeScheduled() && $followUp->status !== FollowUpStatus::OfferedToPatient) {
-            throw new InvalidTreatmentTransitionException('این پیگیری قابل رد نیست.');
-        }
-
-        if (in_array($followUp->status, [FollowUpStatus::Scheduled, FollowUpStatus::Declined, FollowUpStatus::Cancelled], true)) {
-            throw new InvalidTreatmentTransitionException('وضعیت فعلی پیگیری قابل رد نیست.');
-        }
-
         return DB::transaction(function () use ($followUp, $actor, $outcomeNote): FollowUp {
-            $from = $followUp->status->value;
-            $followUp->status = FollowUpStatus::Declined;
-            $followUp->outcome_note = filled($outcomeNote) ? trim($outcomeNote) : $followUp->outcome_note;
-            $followUp->save();
+            $locked = FollowUp::query()->whereKey($followUp->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->status === FollowUpStatus::Declined) {
+                return $locked->refresh();
+            }
+
+            if (! $locked->status->canBeScheduled() && $locked->status !== FollowUpStatus::OfferedToPatient) {
+                throw new InvalidTreatmentTransitionException('این پیگیری قابل رد نیست.');
+            }
+
+            if (in_array($locked->status, [FollowUpStatus::Scheduled, FollowUpStatus::Cancelled], true)) {
+                throw new InvalidTreatmentTransitionException('وضعیت فعلی پیگیری قابل رد نیست.');
+            }
+
+            $from = $locked->status->value;
+            $locked->status = FollowUpStatus::Declined;
+            $locked->outcome_note = filled($outcomeNote) ? trim($outcomeNote) : $locked->outcome_note;
+            $locked->save();
 
             $this->events->record(
                 OperationalEventType::FollowUpStatusChanged,
-                $followUp,
+                $locked,
                 $actor,
                 $from,
-                $followUp->status->value,
+                $locked->status->value,
             );
 
-            return $followUp->refresh();
-        });
+            return $locked->refresh();
+        }, 3);
     }
 }

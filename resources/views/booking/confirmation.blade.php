@@ -7,9 +7,12 @@
             <p class="mt-3 text-sm leading-7 text-slate-600">کد پیگیری را نگه دارید. این صفحه اطلاعات حداقلی وضعیت درخواست را نشان می‌دهد و جایگزین تماس پذیرش نیست.</p>
 
             <dl class="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 text-sm sm:grid-cols-2">
-                <div>
+                <div class="sm:col-span-2">
                     <dt class="text-slate-500">کد پیگیری</dt>
-                    <dd class="mt-1 break-all font-mono text-xs font-semibold text-[color:var(--dos-navy)] sm:text-sm">{{ $reference }}</dd>
+                    <dd class="mt-1 flex flex-wrap items-center gap-2">
+                        <code id="booking-reference" class="break-all font-mono text-xs font-semibold text-[color:var(--dos-navy)] sm:text-sm">{{ $reference }}</code>
+                        <button type="button" data-copy-text="{{ $reference }}" data-copy-feedback="کپی شد" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-navy)]">کپی کد</button>
+                    </dd>
                 </div>
                 <div>
                     <dt class="text-slate-500">وضعیت</dt>
@@ -19,13 +22,14 @@
                     <dt class="text-slate-500">خدمت</dt>
                     <dd class="mt-1 font-semibold text-[color:var(--dos-navy)]">{{ $serviceName }}</dd>
                 </div>
-                <div>
+                <div class="sm:col-span-2">
                     <dt class="text-slate-500">زمان درخواستی</dt>
                     <dd class="mt-1 font-semibold text-[color:var(--dos-navy)]">{{ $whenLabel }}</dd>
                 </div>
             </dl>
 
-            <div class="mt-6 flex flex-wrap gap-3">
+            <div class="mt-6 flex flex-wrap gap-3 print:hidden">
+                <button type="button" onclick="window.print()" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-navy)]">چاپ / ذخیره</button>
                 <a href="{{ route('booking.services') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-[color:var(--dos-navy)] px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">درخواست جدید</a>
                 <a href="{{ route('home') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-navy)]">بازگشت به صفحه اصلی</a>
             </div>

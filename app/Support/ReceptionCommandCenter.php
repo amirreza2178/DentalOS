@@ -124,7 +124,7 @@ final class ReceptionCommandCenter
                 $alerts->push([
                     'tone' => 'attention',
                     'label' => $pendingOnline->count().' درخواست آنلاین در انتظار تأیید',
-                    'href' => route('booking.requests.index'),
+                    'href' => '#online-heading',
                 ]);
             }
 
@@ -132,7 +132,7 @@ final class ReceptionCommandCenter
                 $alerts->push([
                     'tone' => 'neutral',
                     'label' => $actionableFollowUps->count().' پیگیری نیازمند اقدام پذیرش',
-                    'href' => route('clinical.follow-ups.index', ['actionable' => 1]),
+                    'href' => '#followups-heading',
                 ]);
             }
 
@@ -146,7 +146,7 @@ final class ReceptionCommandCenter
                 $alerts->push([
                     'tone' => 'warning',
                     'label' => $lateCount.' نوبت قطعی از ساعت مقرر گذشته و هنوز چک‌این نشده',
-                    'href' => null,
+                    'href' => '#day-appointments-heading',
                 ]);
             }
         }

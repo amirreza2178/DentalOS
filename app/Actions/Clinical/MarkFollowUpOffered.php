@@ -22,29 +22,35 @@ class MarkFollowUpOffered
             throw new AuthorizationException('به‌روزرسانی پیگیری برای این نقش مجاز نیست.');
         }
 
-        if (! in_array($followUp->status, [FollowUpStatus::Proposed, FollowUpStatus::OfferedToPatient], true)) {
-            throw new InvalidTreatmentTransitionException('این پیگیری دیگر قابل علامت‌گذاری به‌عنوان پیشنهادی به بیمار نیست.');
-        }
-
         return DB::transaction(function () use ($followUp, $actor, $outcomeNote): FollowUp {
-            $from = $followUp->status->value;
-            $followUp->status = FollowUpStatus::OfferedToPatient;
+            $locked = FollowUp::query()->whereKey($followUp->id)->lockForUpdate()->firstOrFail();
 
-            if (filled($outcomeNote)) {
-                $followUp->outcome_note = trim($outcomeNote);
+            if ($locked->status === FollowUpStatus::OfferedToPatient) {
+                return $locked->refresh();
             }
 
-            $followUp->save();
+            if ($locked->status !== FollowUpStatus::Proposed) {
+                throw new InvalidTreatmentTransitionException('این پیگیری دیگر قابل علامت‌گذاری به‌عنوان پیشنهادی به بیمار نیست.');
+            }
+
+            $from = $locked->status->value;
+            $locked->status = FollowUpStatus::OfferedToPatient;
+
+            if (filled($outcomeNote)) {
+                $locked->outcome_note = trim($outcomeNote);
+            }
+
+            $locked->save();
 
             $this->events->record(
                 OperationalEventType::FollowUpStatusChanged,
-                $followUp,
+                $locked,
                 $actor,
                 $from,
-                $followUp->status->value,
+                $locked->status->value,
             );
 
-            return $followUp->refresh();
-        });
+            return $locked->refresh();
+        }, 3);
     }
 }

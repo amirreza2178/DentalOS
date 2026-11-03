@@ -74,6 +74,13 @@
                     {{ $duplicateCount }} پرونده دیگر با همین موبایل وجود دارد. درخواست آنلاین به‌طور خودکار به آن‌ها وصل نشده است.
                 </div>
             @endif
+
+            @if ($appointment->patient?->mobile)
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="{{ route('patients.index', ['q' => $appointment->patient->mobile]) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">جستجوی پرونده‌ها با این موبایل</a>
+                    <a href="{{ route('reception.search', ['q' => $appointment->patient->mobile]) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">جستجو روی میز امروز</a>
+                </div>
+            @endif
         </section>
     </div>
 

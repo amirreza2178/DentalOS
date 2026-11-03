@@ -184,12 +184,16 @@ class ReceptionDeskController extends Controller
         ]);
     }
 
-    public function checkIn(Appointment $appointment, CheckInAppointment $checkIn): RedirectResponse
-    {
+    public function checkIn(
+        Request $request,
+        Appointment $appointment,
+        CheckInAppointment $checkIn,
+        JalaliCalendar $calendar,
+    ): RedirectResponse {
         $this->authorize('checkIn', $appointment);
 
         try {
-            $result = $checkIn->handle($appointment, request()->user());
+            $result = $checkIn->handle($appointment, $request->user());
         } catch (AuthorizationException $exception) {
             abort(403, $exception->getMessage());
         } catch (ReceptionConflictException|InvalidAppointmentTransitionException $exception) {
@@ -197,12 +201,23 @@ class ReceptionDeskController extends Controller
         }
 
         $message = $result['created']
-            ? 'چک‌این انجام شد و بیمار به صف اضافه شد.'
-            : 'این بیمار قبلاً چک‌این شده است؛ ویزیت و صف فعلی نمایش داده شد.';
+            ? 'چک‌این انجام شد و بیمار به صف انتظار اضافه شد.'
+            : 'این بیمار قبلاً چک‌این شده بود. صف فعلی به‌روز است.';
+
+        if ($request->boolean('open_visit')) {
+            return redirect()
+                ->route('reception.visits.show', $result['visit'])
+                ->with('status', $message);
+        }
+
+        $day = $calendar->formatDate(
+            $appointment->starts_at->timezone(config('app.timezone'))->toDateString()
+        );
 
         return redirect()
-            ->route('reception.visits.show', $result['visit'])
-            ->with('status', $message);
+            ->route('reception.day', ['date' => $day])
+            ->with('status', $message)
+            ->withFragment('day-queue-heading');
     }
 
     public function callNext(Request $request, CallNextInQueue $callNext, JalaliCalendar $calendar, ClinicDay $clinicDay): RedirectResponse

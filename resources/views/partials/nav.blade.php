@@ -1,8 +1,14 @@
 @php
     $user = auth()->user();
+    $specialistOnly = $user->hasRole(\App\Enums\UserRole::Specialist)
+        && ! $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist);
+    $scheduleLabel = $specialistOnly ? 'برنامه من' : 'مرکز فرمان';
+    $homeRoute = $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist, \App\Enums\UserRole::Specialist)
+        ? 'reception.day'
+        : ($user->hasRole(\App\Enums\UserRole::ClinicalStaff) ? 'clinical.tasks.index' : 'dashboard');
     $links = [
         ['label' => 'میز کار', 'route' => 'dashboard', 'show' => true],
-        ['label' => 'میز پذیرش', 'route' => 'reception.day', 'active' => 'reception.*', 'show' => $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist, \App\Enums\UserRole::Specialist)],
+        ['label' => $scheduleLabel, 'route' => 'reception.day', 'active' => 'reception.*', 'show' => $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist, \App\Enums\UserRole::Specialist)],
         ['label' => 'درخواست‌های آنلاین', 'route' => 'booking.requests.index', 'active' => 'booking.requests.*', 'show' => $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist)],
         ['label' => 'پیگیری‌ها', 'route' => 'clinical.follow-ups.index', 'active' => 'clinical.follow-ups.*', 'show' => $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist, \App\Enums\UserRole::Specialist)],
         ['label' => 'برنامه‌های درمانی', 'route' => 'clinical.plans.index', 'active' => 'clinical.plans.*', 'show' => $user->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist, \App\Enums\UserRole::Specialist)],
@@ -21,7 +27,7 @@
     ];
 @endphp
 <div class="flex items-center justify-between px-4 py-4 lg:block">
-    <a href="{{ route('dashboard') }}" class="block rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-400">
+    <a href="{{ route($homeRoute) }}" class="block rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-400">
         @if (($clinicIdentity ?? null)?->hasLogo())
             <img src="{{ asset($clinicIdentity->logoPath()) }}" alt="{{ $clinicIdentity->clinicDisplayName() }}" class="h-8 w-auto max-w-[11rem] object-contain">
         @else

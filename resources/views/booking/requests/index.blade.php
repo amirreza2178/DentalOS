@@ -1,6 +1,6 @@
 <x-management-layout title="درخواست‌های آنلاین">
     <x-page-header title="درخواست‌های رزرو آنلاین" description="تأیید یا رد درخواست‌های در انتظار. منابع در حالت انتظار تأیید اشغال می‌مانند.">
-        <a href="{{ route('reception.day') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">میز پذیرش</a>
+        <a href="{{ route('reception.day') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">مرکز فرمان</a>
     </x-page-header>
 
     <div class="mb-4 flex gap-2" role="tablist" aria-label="وضعیت درخواست‌ها">

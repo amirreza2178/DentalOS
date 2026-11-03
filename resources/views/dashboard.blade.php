@@ -1,10 +1,14 @@
 <x-management-layout title="میز کار">
+    @php
+        $specialistOnly = auth()->user()->hasRole(\App\Enums\UserRole::Specialist)
+            && ! auth()->user()->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist);
+    @endphp
     <x-page-header title="میز کار" description="عملیات روزانه از اینجا شروع می‌شود. آماری ساختگی نمایش داده نمی‌شود." />
     <div class="grid gap-3 sm:grid-cols-2">
         @if (auth()->user()->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist, \App\Enums\UserRole::Specialist))
             <a href="{{ route('reception.day') }}" class="rounded-2xl border border-slate-200 bg-white p-5 hover:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700">
-                <p class="text-base font-semibold text-slate-900">برنامه امروز</p>
-                <p class="mt-1 text-sm text-slate-600">نوبت‌های روز، حضور بیمار و ورود به ویزیت</p>
+                <p class="text-base font-semibold text-slate-900">{{ $specialistOnly ? 'برنامه امروز من' : 'مرکز فرمان پذیرش' }}</p>
+                <p class="mt-1 text-sm text-slate-600">{{ $specialistOnly ? 'نوبت‌های تخصیص‌یافته و ادامه مسیر بالینی' : 'نوبت، صف، درخواست آنلاین و پیگیری روز' }}</p>
             </a>
             <a href="{{ route('clinical.follow-ups.index') }}" class="rounded-2xl border border-slate-200 bg-white p-5 hover:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700">
                 <p class="text-base font-semibold text-slate-900">پیگیری‌ها</p>

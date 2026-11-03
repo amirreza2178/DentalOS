@@ -87,6 +87,47 @@ class ReceptionCommandCenterTest extends TestCase
         $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
 
         $this->get(route('reception.search'))->assertForbidden();
-        $this->get(route('reception.day', ['date' => $date]))->assertOk();
+        $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee('برنامه امروز من', false)
+            ->assertDontSee('درخواست‌های آنلاین', false);
+    }
+
+    public function test_pending_online_rows_offer_inline_approval_on_command_center(): void
+    {
+        $clinic = $this->makeClinic();
+        $this->signIn(UserRole::Receptionist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+
+        $onlinePatient = Patient::query()->create([
+            'code' => 'P-ON2',
+            'first_name' => 'نیما',
+            'last_name' => 'آنلاین',
+            'mobile' => '09123334455',
+            'mobile_normalized' => '09123334455',
+            'status' => 'active',
+        ]);
+
+        $pending = Appointment::query()->create([
+            'public_reference' => (string) Str::uuid(),
+            'patient_id' => $onlinePatient->id,
+            'treatment_service_id' => $clinic['service']->id,
+            'starts_at' => '2026-11-07 09:20:00',
+            'ends_at' => '2026-11-07 10:00:00',
+            'status' => AppointmentStatus::PendingApproval->value,
+            'source' => AppointmentSource::Online->value,
+        ]);
+
+        $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee('تأیید آنلاین', false)
+            ->assertSee('تا تأیید پذیرش، چک‌این ممکن نیست.', false);
+
+        $this->post(route('booking.requests.approve', $pending), [
+            'return_to' => 'reception.day',
+            'return_date' => $date,
+        ])->assertRedirect();
+
+        $this->assertSame(AppointmentStatus::Confirmed, $pending->fresh()->status);
     }
 }

@@ -1,17 +1,19 @@
 @php
     $refreshLabel = $clinicDay->formatClock($refreshedAt);
 @endphp
-<x-management-layout title="مرکز فرمان پذیرش" :auto-refresh-seconds="$autoRefreshSeconds">
+<x-management-layout :title="$specialistScoped ? 'برنامه امروز من' : 'مرکز فرمان پذیرش'" :auto-refresh-seconds="$autoRefreshSeconds">
     <div class="dos-command-shell -mx-4 -mt-6 mb-6 border-b border-slate-200/80 px-4 py-6 sm:px-0 sm:py-7">
         <div class="mx-auto w-full max-w-6xl px-4 sm:px-0">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div class="min-w-0">
                     <p class="text-sm font-semibold text-teal-800">{{ $clinicIdentity->clinicDisplayName() }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-[color:var(--dos-navy)] sm:text-3xl">مرکز فرمان پذیرش</h1>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-[color:var(--dos-navy)] sm:text-3xl">
+                        {{ $specialistScoped ? 'برنامه امروز من' : 'مرکز فرمان پذیرش' }}
+                    </h1>
                     <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                         برنامه روز {{ $date }}
                         @if ($specialistScoped)
-                            — نمای محدود به نوبت‌های تخصیص‌یافته شما
+                            — فقط نوبت‌های تخصیص‌یافته به شما؛ عملیات صف و تأیید آنلاین با پذیرش است
                         @else
                             — نوبت، صف، درخواست آنلاین و پیگیری در یک نگاه
                         @endif
@@ -19,7 +21,7 @@
                     <p class="mt-1 text-xs text-slate-500">
                         آخرین به‌روزرسانی صفحه: {{ $refreshLabel }}
                         @if ($autoRefreshSeconds)
-                            · تازه‌سازی خودکار هر {{ $autoRefreshSeconds }} ثانیه (بدون وب‌سوکت)
+                            · تازه‌سازی آرام هر {{ $autoRefreshSeconds }} ثانیه هنگام بیکاری (بدون وب‌سوکت)
                         @endif
                         · timezone برنامه: {{ $timezoneLabel }}
                     </p>
@@ -102,12 +104,22 @@
                                     <p class="font-semibold text-[color:var(--dos-navy)]">{{ $clinicDay->formatClock($appointment->starts_at) }} · {{ $appointment->patient?->fullName() }}</p>
                                     <p class="mt-0.5 text-xs text-slate-500">{{ $appointment->treatmentService?->name }} · {{ $appointment->status->label() }}</p>
                                 </div>
-                                @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed)
-                                    <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
-                                        @csrf
-                                        <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">چک‌این</button>
-                                    </form>
-                                @endif
+                                <div class="flex flex-wrap gap-2">
+                                    @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
+                                        <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}">
+                                            @csrf
+                                            <input type="hidden" name="return_to" value="reception.day">
+                                            <input type="hidden" name="return_date" value="{{ $date }}">
+                                            <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">تأیید</button>
+                                        </form>
+                                    @endif
+                                    @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed)
+                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
+                                            @csrf
+                                            <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">چک‌این</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </li>
                         @endforeach
                     </ul>
@@ -131,17 +143,20 @@
                                 $late = $appointment->status === \App\Enums\AppointmentStatus::Confirmed
                                     && $appointment->starts_at->lt(now(config('app.timezone')));
                             @endphp
-                            <article class="rounded-2xl border border-slate-200 bg-white p-4">
+                            <article class="rounded-2xl border border-slate-200 bg-white p-4 {{ $appointment->status === \App\Enums\AppointmentStatus::PendingApproval ? 'border-amber-300' : '' }}">
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
                                         <p class="text-lg font-bold tabular-nums text-[color:var(--dos-navy)]">{{ $clinicDay->formatClock($appointment->starts_at) }}</p>
                                         <p class="mt-1 font-semibold">{{ $appointment->patient?->fullName() }}</p>
                                         <p class="text-xs text-slate-500">{{ $appointment->patient?->code }} · {{ $appointment->treatmentService?->name }}</p>
                                     </div>
-                                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $appointment->status->label() }}</span>
+                                    <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $appointment->status === \App\Enums\AppointmentStatus::PendingApproval ? 'bg-amber-100 text-amber-950' : ($appointment->status === \App\Enums\AppointmentStatus::Confirmed ? 'bg-teal-50 text-teal-900' : 'bg-slate-100 text-slate-700') }}">{{ $appointment->status->label() }}</span>
                                 </div>
                                 @if ($late)
                                     <p class="mt-2 text-xs text-amber-800">دیرکرد نسبت به ساعت نوبت</p>
+                                @endif
+                                @if ($appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
+                                    <p class="mt-2 text-xs text-amber-900">تا تأیید پذیرش، چک‌این ممکن نیست.</p>
                                 @endif
                                 <p class="mt-2 text-sm text-slate-600">
                                     @if ($visit)
@@ -149,11 +164,20 @@
                                         @if ($queueEntry)
                                             · صف {{ $queueEntry->status->label() }} ({{ $queueEntry->position }})
                                         @endif
-                                    @else
+                                    @elseif ($appointment->status !== \App\Enums\AppointmentStatus::PendingApproval)
                                         چک‌این نشده
                                     @endif
                                 </p>
                                 <div class="mt-3 flex flex-wrap gap-2">
+                                    @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
+                                        <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}">
+                                            @csrf
+                                            <input type="hidden" name="return_to" value="reception.day">
+                                            <input type="hidden" name="return_date" value="{{ $date }}">
+                                            <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white">تأیید آنلاین</button>
+                                        </form>
+                                        <a href="{{ route('booking.requests.show', $appointment) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">بررسی</a>
+                                    @endif
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed && ! $visit)
                                         <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
                                             @csrf
@@ -189,7 +213,7 @@
                                         $late = $appointment->status === \App\Enums\AppointmentStatus::Confirmed
                                             && $appointment->starts_at->lt(now(config('app.timezone')));
                                     @endphp
-                                    <tr class="border-t border-slate-100 align-top">
+                                    <tr class="border-t border-slate-100 align-top {{ $appointment->status === \App\Enums\AppointmentStatus::PendingApproval ? 'bg-amber-50/40' : '' }}">
                                         <td class="px-3 py-3 whitespace-nowrap">
                                             <a class="font-medium text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700" href="{{ route('appointments.show', $appointment) }}">{{ $clinicDay->formatClock($appointment->starts_at) }}</a>
                                             @if ($late)
@@ -201,19 +225,32 @@
                                             <div class="text-xs text-slate-500">{{ $appointment->patient?->code }}</div>
                                         </td>
                                         <td class="px-3 py-3">{{ $appointment->treatmentService?->name }}</td>
-                                        <td class="px-3 py-3">{{ $appointment->status->label() }}</td>
+                                        <td class="px-3 py-3">
+                                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $appointment->status === \App\Enums\AppointmentStatus::PendingApproval ? 'bg-amber-100 text-amber-950' : ($appointment->status === \App\Enums\AppointmentStatus::Confirmed ? 'bg-teal-50 text-teal-900' : 'bg-slate-100 text-slate-700') }}">{{ $appointment->status->label() }}</span>
+                                        </td>
                                         <td class="px-3 py-3">
                                             @if ($visit)
                                                 <a class="text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700" href="{{ route('reception.visits.show', $visit) }}">{{ $visit->status->label() }}</a>
                                                 @if ($queueEntry)
                                                     <div class="text-xs text-slate-500">صف: {{ $queueEntry->status->label() }} — ردیف {{ $queueEntry->position }}</div>
                                                 @endif
+                                            @elseif ($appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
+                                                <span class="text-amber-900">در انتظار تأیید</span>
                                             @else
                                                 <span class="text-slate-500">چک‌این نشده</span>
                                             @endif
                                         </td>
                                         <td class="px-3 py-3">
                                             <div class="flex flex-col items-stretch gap-2">
+                                                @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
+                                                    <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}">
+                                                        @csrf
+                                                        <input type="hidden" name="return_to" value="reception.day">
+                                                        <input type="hidden" name="return_date" value="{{ $date }}">
+                                                        <button type="submit" class="w-full rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">تأیید آنلاین</button>
+                                                    </form>
+                                                    <a href="{{ route('booking.requests.show', $appointment) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">بررسی</a>
+                                                @endif
                                                 @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed && ! $visit)
                                                     <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
                                                         @csrf
@@ -339,15 +376,23 @@
                                     <p class="mt-1 text-xs text-slate-500">{{ $calendar->formatDate($request->starts_at) }} {{ $clinicDay->formatClock($request->starts_at) }} · {{ $request->treatmentService?->name }}</p>
                                     <div class="mt-3 flex flex-wrap gap-2">
                                         <a href="{{ route('booking.requests.show', $request) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">بررسی</a>
-                                        <form method="POST" action="{{ route('booking.requests.approve', $request) }}" onsubmit="return confirm('این درخواست تأیید شود؟')">
+                                        <form method="POST" action="{{ route('booking.requests.approve', $request) }}" data-booking-submit>
                                             @csrf
+                                            <input type="hidden" name="return_to" value="reception.day">
+                                            <input type="hidden" name="return_date" value="{{ $date }}">
                                             <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white">تأیید</button>
                                         </form>
-                                        <form method="POST" action="{{ route('booking.requests.reject', $request) }}" onsubmit="return confirm('این درخواست رد شود؟')">
-                                            @csrf
-                                            <button type="submit" class="min-h-10 rounded-lg border border-rose-300 px-3 text-xs font-medium text-rose-800">رد</button>
-                                        </form>
                                     </div>
+                                    <form method="POST" action="{{ route('booking.requests.reject', $request) }}" data-booking-submit class="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                                        @csrf
+                                        <input type="hidden" name="return_to" value="reception.day">
+                                        <input type="hidden" name="return_date" value="{{ $date }}">
+                                        <label class="block space-y-1" for="reject-reason-{{ $request->id }}">
+                                            <span class="text-xs font-medium text-slate-600">دلیل رد (اختیاری)</span>
+                                            <input id="reject-reason-{{ $request->id }}" name="decision_reason" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                                        </label>
+                                        <button type="submit" class="min-h-10 rounded-lg border border-rose-300 px-3 text-xs font-medium text-rose-800 hover:bg-rose-50">رد درخواست</button>
+                                    </form>
                                 </li>
                             @endforeach
                         </ul>

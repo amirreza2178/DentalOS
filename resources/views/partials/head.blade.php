@@ -7,7 +7,4 @@
 @endphp
 <title>{{ $pageTitle }}</title>
 <meta name="description" content="{{ $identity->introduction() }}">
-@if (! empty($autoRefreshSeconds))
-    <meta http-equiv="refresh" content="{{ (int) $autoRefreshSeconds }}">
-@endif
 @vite(['resources/css/app.css', 'resources/js/app.js'])

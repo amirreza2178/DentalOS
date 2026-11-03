@@ -46,11 +46,19 @@ class PublicBookingController extends Controller
                 ->withErrors(['service' => 'این خدمت برای رزرو آنلاین در دسترس نیست.']);
         }
 
+        $timezone = config('app.timezone');
+        $today = now($timezone)->startOfDay();
+
         return view('booking.date', [
             'service' => $service,
             'calendar' => $calendar,
             'step' => 2,
-            'todayJalali' => $calendar->formatDate(now(config('app.timezone'))),
+            'todayJalali' => $calendar->formatDate($today),
+            'quickDates' => [
+                ['label' => 'امروز', 'value' => $calendar->formatDate($today)],
+                ['label' => 'فردا', 'value' => $calendar->formatDate($today->copy()->addDay())],
+                ['label' => 'پس‌فردا', 'value' => $calendar->formatDate($today->copy()->addDays(2))],
+            ],
         ]);
     }
 
@@ -73,6 +81,9 @@ class PublicBookingController extends Controller
             $slots = $availability->slots($service, $gregorian);
         }
 
+        $timezone = config('app.timezone');
+        $today = now($timezone)->startOfDay();
+
         return view('booking.slots', [
             'service' => $service,
             'calendar' => $calendar,
@@ -81,6 +92,11 @@ class PublicBookingController extends Controller
             'gregorian' => $gregorian,
             'slots' => $slots,
             'step' => 3,
+            'quickDates' => [
+                ['label' => 'امروز', 'value' => $calendar->formatDate($today)],
+                ['label' => 'فردا', 'value' => $calendar->formatDate($today->copy()->addDay())],
+                ['label' => 'پس‌فردا', 'value' => $calendar->formatDate($today->copy()->addDays(2))],
+            ],
         ]);
     }
 

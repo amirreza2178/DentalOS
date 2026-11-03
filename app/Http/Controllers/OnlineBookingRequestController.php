@@ -87,21 +87,23 @@ class OnlineBookingRequestController extends Controller
         ]);
     }
 
-    public function approve(Appointment $appointment, ApproveOnlineAppointment $approve): RedirectResponse
+    public function approve(Request $request, Appointment $appointment, ApproveOnlineAppointment $approve): RedirectResponse
     {
         $this->authorize('decideOnline', $appointment);
 
         try {
-            $approve->approve($appointment, request()->user());
+            $approve->approve($appointment, $request->user());
         } catch (OnlineBookingConflictException|InvalidAppointmentTransitionException $exception) {
             return back()->withErrors(['status' => $exception->getMessage()]);
         } catch (AuthorizationException $exception) {
             abort(403, $exception->getMessage());
         }
 
-        return redirect()
-            ->route('booking.requests.show', $appointment)
-            ->with('status', 'درخواست تأیید شد. منابع از قبل رزرو شده بودند و دوباره تخصیص نشدند.');
+        return $this->decisionRedirect(
+            $request,
+            $appointment,
+            'درخواست تأیید شد. منابع از قبل رزرو شده بودند و دوباره تخصیص نشدند.',
+        );
     }
 
     public function reject(RejectOnlineBookingRequest $request, Appointment $appointment, RejectOnlineAppointment $reject): RedirectResponse
@@ -118,9 +120,27 @@ class OnlineBookingRequestController extends Controller
             abort(403, $exception->getMessage());
         }
 
+        return $this->decisionRedirect(
+            $request,
+            $appointment,
+            'درخواست رد شد و منابع آزاد شدند.',
+        );
+    }
+
+    private function decisionRedirect(Request $request, Appointment $appointment, string $status): RedirectResponse
+    {
+        if ($request->string('return_to')->toString() === 'reception.day') {
+            $date = trim($request->string('return_date')->toString());
+
+            return redirect()
+                ->route('reception.day', array_filter(['date' => $date !== '' ? $date : null]))
+                ->with('status', $status)
+                ->withFragment('online-heading');
+        }
+
         return redirect()
             ->route('booking.requests.show', $appointment)
-            ->with('status', 'درخواست رد شد و منابع آزاد شدند.');
+            ->with('status', $status);
     }
 
     /**

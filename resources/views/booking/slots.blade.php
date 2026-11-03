@@ -4,9 +4,9 @@
         <h1 class="mt-1 text-2xl font-bold text-[color:var(--dos-navy)]">زمان‌های آزاد</h1>
         <p class="mt-1 text-sm leading-6 text-slate-600">
             @if ($gregorian)
-                تاریخ {{ $calendar->formatDate($gregorian) }}
+                تاریخ {{ $calendar->formatDate($gregorian) }} — فقط بازه‌های آزاد همین لحظه نمایش داده می‌شود.
             @else
-                تاریخ را اصلاح کنید.
+                تاریخ را اصلاح کنید تا زمان‌های آزاد دیده شود.
             @endif
         </p>
     </header>
@@ -15,10 +15,18 @@
         <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert">{{ $dateError }}</div>
     @endif
 
+    <div class="mb-4 flex flex-wrap gap-2" role="group" aria-label="تغییر سریع تاریخ">
+        @foreach ($quickDates as $quick)
+            <a href="{{ route('booking.slots', ['service' => $service, 'date' => $quick['value']]) }}" class="inline-flex min-h-10 items-center rounded-xl border px-3 text-sm {{ $date === $quick['value'] ? 'border-[color:var(--dos-navy)] bg-[color:var(--dos-navy)] font-semibold text-white' : 'border-slate-300 bg-white text-[color:var(--dos-navy)] hover:border-[color:var(--dos-accent)]' }} focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">
+                {{ $quick['label'] }}
+            </a>
+        @endforeach
+    </div>
+
     <form method="GET" action="{{ route('booking.slots', $service) }}" class="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <label class="block grow space-y-1" for="date">
             <span class="text-sm font-medium">تاریخ جلالی</span>
-            <input id="date" name="date" value="{{ $date }}" required inputmode="numeric" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">
+            <input id="date" name="date" value="{{ $date }}" required inputmode="numeric" autocomplete="off" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">
         </label>
         <button type="submit" class="min-h-11 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-navy)]">به‌روزرسانی</button>
     </form>
@@ -26,7 +34,7 @@
     @if ($gregorian && $slots === [])
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-5 py-10 text-center">
             <h2 class="text-lg font-semibold text-[color:var(--dos-navy)]">زمان آزادی نیست</h2>
-            <p class="mt-2 text-sm text-slate-600">برای این تاریخ زمان آزادی پیدا نشد. تاریخ دیگری را امتحان کنید.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">برای این تاریخ زمان آزادی پیدا نشد. تاریخ دیگری را از دکمه‌های بالا امتحان کنید یا با پذیرش تماس بگیرید.</p>
         </div>
     @elseif ($slots !== [])
         <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3" role="list">
@@ -39,6 +47,7 @@
                 </li>
             @endforeach
         </ul>
+        <p class="mt-4 text-xs leading-5 text-slate-500">با انتخاب ساعت، هنوز نوبت قطعی نمی‌شود؛ فقط فرم درخواست باز می‌شود.</p>
     @endif
 
     <p class="mt-6">

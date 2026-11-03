@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,7 +60,20 @@ class LoginController extends Controller
         RateLimiter::clear($key);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended($this->homePathFor($user));
+    }
+
+    private function homePathFor(User $user): string
+    {
+        if ($user->hasRole(UserRole::Admin, UserRole::Receptionist, UserRole::Specialist)) {
+            return route('reception.day');
+        }
+
+        if ($user->hasRole(UserRole::ClinicalStaff)) {
+            return route('clinical.tasks.index');
+        }
+
+        return route('dashboard');
     }
 
     public function destroy(Request $request): RedirectResponse

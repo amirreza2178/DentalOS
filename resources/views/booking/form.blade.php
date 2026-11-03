@@ -34,18 +34,28 @@
 
         <div class="grid gap-4 sm:grid-cols-2">
             <label class="block space-y-1" for="first_name">
-                <span class="text-sm font-medium">نام</span>
-                <input id="first_name" name="first_name" value="{{ old('first_name') }}" required maxlength="80" autocomplete="given-name" class="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">
+                <span class="text-sm font-medium">نام <span class="text-rose-700">*</span></span>
+                <input id="first_name" name="first_name" value="{{ old('first_name') }}" required maxlength="80" autocomplete="given-name" class="w-full rounded-xl border px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40 {{ $errors->has('first_name') ? 'border-rose-400' : 'border-slate-300' }}">
+                @error('first_name')
+                    <span class="block text-xs text-rose-700">{{ $message }}</span>
+                @enderror
             </label>
             <label class="block space-y-1" for="last_name">
-                <span class="text-sm font-medium">نام خانوادگی</span>
-                <input id="last_name" name="last_name" value="{{ old('last_name') }}" required maxlength="80" autocomplete="family-name" class="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">
+                <span class="text-sm font-medium">نام خانوادگی <span class="text-rose-700">*</span></span>
+                <input id="last_name" name="last_name" value="{{ old('last_name') }}" required maxlength="80" autocomplete="family-name" class="w-full rounded-xl border px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40 {{ $errors->has('last_name') ? 'border-rose-400' : 'border-slate-300' }}">
+                @error('last_name')
+                    <span class="block text-xs text-rose-700">{{ $message }}</span>
+                @enderror
             </label>
         </div>
 
         <label class="block space-y-1" for="mobile">
-            <span class="text-sm font-medium">شماره موبایل</span>
-            <input id="mobile" name="mobile" value="{{ old('mobile') }}" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="0912xxxxxxx" class="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">
+            <span class="text-sm font-medium">شماره موبایل <span class="text-rose-700">*</span></span>
+            <input id="mobile" name="mobile" value="{{ old('mobile') }}" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="0912xxxxxxx" class="w-full rounded-xl border px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40 {{ $errors->has('mobile') ? 'border-rose-400' : 'border-slate-300' }}">
+            @error('mobile')
+                <span class="block text-xs text-rose-700">{{ $message }}</span>
+            @enderror
+            <span class="block text-xs leading-5 text-slate-500">برای تماس پذیرش؛ با پرونده موجود فقط به‌خاطر شباهت شماره وصل نمی‌شود.</span>
         </label>
 
         <label class="block space-y-1" for="patient_notes">
@@ -53,7 +63,9 @@
             <textarea id="patient_notes" name="patient_notes" rows="3" maxlength="300" class="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">{{ old('patient_notes') }}</textarea>
         </label>
 
-        <p class="text-xs leading-5 text-slate-500">{{ $clinicIdentity->bookingClarification() }} این فرم حساب کاربری نمی‌سازد و به پرونده پزشکی موجود وصل نمی‌شود.</p>
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-950" role="note">
+            {{ $clinicIdentity->bookingClarification() }} این فرم حساب کاربری نمی‌سازد و به پرونده پزشکی موجود وصل نمی‌شود.
+        </div>
 
         <button type="submit" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[color:var(--dos-navy)] px-4 py-3 text-sm font-semibold text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
             ثبت درخواست نوبت

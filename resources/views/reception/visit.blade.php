@@ -1,6 +1,8 @@
 <x-management-layout title="جزئیات ویزیت">
     <x-page-header title="ویزیت {{ $visit->patient?->fullName() }}" description="{{ $visit->status->label() }} — ویزیت از نوبت و صف جدا است.">
-        <a href="{{ route('reception.day') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">میز پذیرش</a>
+        <a href="{{ route('reception.day') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">
+            {{ auth()->user()->hasRole(\App\Enums\UserRole::Specialist) && ! auth()->user()->hasRole(\App\Enums\UserRole::Admin, \App\Enums\UserRole::Receptionist) ? 'برنامه من' : 'مرکز فرمان' }}
+        </a>
         @if ($visit->appointment)
             <a href="{{ route('appointments.show', $visit->appointment) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">نوبت</a>
         @endif

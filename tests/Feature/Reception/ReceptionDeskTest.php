@@ -105,10 +105,17 @@ class ReceptionDeskTest extends TestCase
         }
 
         $open = $this->reserveAt($clinic, '08:40', ['patient' => $clinic['otherPatient']]);
-        $this->post(route('reception.check-in', $open))
-            ->assertRedirect(route('reception.visits.show', PatientVisit::query()->first()));
+        $day = app(JalaliCalendar::class)->formatDate('2026-11-07');
+        $checkIn = $this->post(route('reception.check-in', $open));
+        $checkIn->assertRedirect();
+        $this->assertStringStartsWith(
+            route('reception.day', ['date' => $day]),
+            $checkIn->headers->get('Location'),
+        );
 
-        $this->get(route('reception.day', ['date' => app(JalaliCalendar::class)->formatDate('2026-11-07')]))
+        $this->assertNotNull(PatientVisit::query()->first());
+
+        $this->get(route('reception.day', ['date' => $day]))
             ->assertOk()
             ->assertSee('صف انتظار')
             ->assertSee($clinic['otherPatient']->fullName());

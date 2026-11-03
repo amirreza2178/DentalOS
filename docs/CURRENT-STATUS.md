@@ -1,7 +1,7 @@
 # وضعیت جاری DentalOS
 
 آخرین به‌روزرسانی: 2026-11-03  
-فاز: Post Day 7 — پالایش صفحه اصلی + بازبینی کسب‌وکار/امنیت  
+فاز: Day 8 — Operational Excellence و تجربه کاربری end-to-end  
 پیش از آن: Day 7 — هویت کلینیک + مرکز فرمان پذیرش + سخت‌سازی امنیتی
 
 ---
@@ -10,7 +10,8 @@
 
 Day 1 تا Day 5: `2f16bc5e85a73344a1b71a93a31f428bba85859d`  
 Day 6: `8624aa99b204e7d6f67fd320026aafcc39b411c0`  
-Day 7: `67fa2d8b10683fbe0badd51a96fbeef28bfe2560`
+Day 7: `67fa2d8b10683fbe0badd51a96fbeef28bfe2560`  
+Day 8: پس از commit این گزارش ثبت می‌شود
 
 اپ محلی به **MariaDB** وصل است: پایگاه `dental_os`، کاربر `dental_os_app@127.0.0.1`.
 
@@ -20,7 +21,6 @@ Day 7: `67fa2d8b10683fbe0badd51a96fbeef28bfe2560`
 
 - شاخه: `master`
 - Remote: `origin` = `https://github.com/amirreza2178/DentalOS.git`
-- Push Day 7: انجام شد؛ شاخه با `origin/master` هم‌تراز است
 - `.env` و `storage/app/private/*` در `.gitignore` هستند
 
 ---
@@ -30,41 +30,41 @@ Day 7: `67fa2d8b10683fbe0badd51a96fbeef28bfe2560`
 | مورد | نتیجه |
 |------|--------|
 | اتصال Laravel | `pdo=ok` / `driver=mariadb` |
-| migrate:status | بدون migration جدید Day 7 (کلیدهای هویت روی `clinic_settings` موجود) |
-| `dental_os_test` | **وجود ندارد** — تست همزمانی InnoDB مسدود و مستند شد |
+| migrate:status | بدون migration جدید Day 8 |
+| `dental_os_test` | **وجود ندارد** — تست همزمانی InnoDB همچنان مسدود |
 | `migrate:fresh` | اجرا نشد |
 
 PHPUnit از `sqlite :memory:` استفاده می‌کند.
 
 ---
 
-## آنچه در Day 7 پیاده شد
+## آنچه در Day 8 پیاده شد
 
-### هویت مرکزی کلینیک
-- `App\Support\ClinicIdentity` + کلیدهای جدید در `ClinicSetting` (بدون migration جدید)
-- نام نمایشی پزشک پیش‌فرض: **دکتر هومان شفاعی**
-- عنوان: متخصص ارتودنسی
-- نام کلینیک پیش‌فرض: کلینیک ارتودنسی دکتر هومان شفاعی
-- صفحات عمومی رزرو با هویت تایپوگرافی (بدون لوگو/پرتره تأییدنشده)
+### بیمار / رزرو عمومی
+- میان‌بر تاریخ جلالی (امروز/فردا/پس‌فردا) روی انتخاب تاریخ و زمان
+- فرم با نشان الزام، خطای فیلدی، و تأکید صریح «درخواست ≠ نوبت قطعی»
+- confirmation با کپی کد پیگیری و چاپ؛ بدون افشای نام/موبایل
 
-### مرکز فرمان پذیرش
-- `/reception` به command center روزانه تبدیل شد
-- نوبت‌های امروز، صف (waiting/called/in_service)، درخواست آنلاین، پیگیری، هشدارها، نوبت‌های پیش‌رو
-- جستجوی سریع، تأیید/رد آنلاین در همان صفحه، تازه‌سازی خودکار ۹۰ثانیه‌ای بدون WebSocket
-- کارت‌های موبایل + جدول دسکتاپ
+### پذیرش
+- ورود مستقیم به `reception.day` پس از login
+- چک‌این روی مرکز فرمان می‌ماند (نه پرش اجباری به ویزیت)
+- تأیید آنلاین ردیفی برای `pending_approval` + badge وضعیت
+- رد آنلاین در sidebar با فیلد دلیل و بازگشت به مرکز فرمان
+- هشدارهای عملیاتی با anchor به بخش مربوط
+- تازه‌سازی آرام JS هنگام بیکاری به‌جای meta refresh اجباری
 
-### امنیت
-- چرخش رمز موقت ضعیف `staff@dentalos.local` به credential قوی محلی (فقط در فایل gitignored خصوصی)
-- صفحه confirmation عمومی: حداقل داده، بدون نام/موبایل بیمار، 404 عمومی برای UUID نامعتبر
-- محدوده بیمار متخصص + تست‌های deny
-- رویداد عملیاتی برای لغو/جابه‌جایی نوبت
-- `lockForUpdate` روی تغییر وضعیت وظیفه درمانی
-- CSP: `style-src 'unsafe-inline'` هنوز لازم است؛ honestly documented
-- تست اختصاصی MariaDB concurrency: skip تا ساخت `dental_os_test`
+### متخصص
+- برچسب ناوبری/عنوان «برنامه من» به‌جای «میز پذیرش»
+- توضیح محدودیت: صف و تأیید آنلاین با پذیرش است
+
+### همزمانی / امنیت عملیاتی
+- `lockForUpdate` + idempotency روی offer/decline پیگیری
+- پیام تعارض موجود برای تأیید/رد/چک‌این حفظ و مسیر redirect شفاف شد
+- جستجوی پرونده‌های هم‌موبایل از جزئیات درخواست آنلاین (بدون auto-merge)
 
 ## آنچه عمداً ساخته نشد
 
-Billing، SMS/OTP، درگاه پرداخت، CMS برندینگ پیچیده، multi-clinic، WebSocket، دانلود عکس پزشک، آمار جعلی.
+Billing، SMS/OTP، درگاه پرداخت، WebSocket، portal بیمار، multi-clinic، `dental_os_test` (نیاز به دسترسی ادمین MariaDB).
 
 ---
 
@@ -72,13 +72,14 @@ Billing، SMS/OTP، درگاه پرداخت، CMS برندینگ پیچیده، 
 
 | دستور | نتیجه |
 |-------|--------|
-| `php artisan test` | **73 passed / 1 skipped / 441 assertions / ~22s** |
+| `php artisan test` | **79 passed / 1 skipped / 480 assertions / ~33s** |
 | `npm run build` | موفق؛ 61 ماژول |
-| Password rotation | انجام شد؛ رمز در گزارش چاپ نشد |
-| Visual QA | مرورگر عمومی + اندازه صفحه؛ authenticated در صورت امکان |
+| Visual QA | صفحه اصلی، `/book` (empty state)، `/login`؛ emulation عرض با CDP ناپایدار بود |
 
 ---
 
-## کار بعدی (Day 8 پیشنهادی)
+## کار بعدی (Day 9 پیشنهادی)
 
-Billing پایه (Invoice/Payment/Balance) + گزارش مالی روزانه پذیرش؛ بدون درگاه آنلاین. یا تکمیل `dental_os_test` برای concurrency InnoDB.
+1. ایجاد `dental_os_test` و فعال‌سازی concurrency InnoDB.  
+2. یا Billing پایه حضوری (Invoice/Payment/Balance) بدون درگاه آنلاین.  
+3. یا seed امن خدمات bookable برای محیط محلی اگر خالی باشد.

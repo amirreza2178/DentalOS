@@ -4,7 +4,7 @@
 <head>
     @include('partials.head', ['title' => $title, 'autoRefreshSeconds' => $autoRefreshSeconds])
 </head>
-<body class="min-h-screen bg-slate-100 font-sans text-slate-900 antialiased">
+<body class="min-h-screen bg-slate-100 font-sans text-slate-900 antialiased" @if (! empty($autoRefreshSeconds)) data-soft-refresh="{{ (int) $autoRefreshSeconds }}" @endif>
     <a href="#content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2">رفتن به محتوا</a>
     <div class="lg:grid lg:min-h-screen lg:grid-cols-[16rem_1fr]">
         <aside id="app-sidebar" class="hidden border-b border-slate-800 bg-slate-900 text-slate-100 lg:flex lg:flex-col">
