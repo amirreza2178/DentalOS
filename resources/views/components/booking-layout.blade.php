@@ -12,9 +12,9 @@
                 @if ($clinicIdentity->hasLogo())
                     <img src="{{ asset($clinicIdentity->logoPath()) }}" alt="{{ $clinicIdentity->clinicDisplayName() }}" class="h-9 w-auto max-w-[12rem] object-contain">
                 @else
-                    <span class="block text-lg font-bold leading-tight tracking-tight sm:text-xl">{{ $clinicIdentity->clinicDisplayName() }}</span>
+                    <span class="block text-lg font-bold leading-tight tracking-tight sm:text-xl">{{ $clinicIdentity->publicNavBrand() }}</span>
                 @endif
-                <span class="mt-1 block truncate text-xs text-slate-300">{{ $clinicIdentity->doctorDisplayName() }} · {{ $clinicIdentity->doctorTitle() }}</span>
+                <span class="mt-1 block truncate text-xs text-slate-300">{{ $clinicIdentity->doctorTitle() }}</span>
             </a>
             @auth
                 <a href="{{ route('dashboard') }}" class="shrink-0 rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">میز کار</a>

@@ -13,6 +13,8 @@ final class ClinicIdentity
 {
     public const DEFAULT_CLINIC_DISPLAY_NAME = 'کلینیک ارتودنسی دکتر هومان شفاعی';
 
+    public const DEFAULT_PUBLIC_NAV_BRAND = 'کلینیک ارتودنسی';
+
     public const DEFAULT_DOCTOR_DISPLAY_NAME = 'دکتر هومان شفاعی';
 
     public const DEFAULT_DOCTOR_TITLE = 'متخصص ارتودنسی';
@@ -23,13 +25,27 @@ final class ClinicIdentity
 
     public const DEFAULT_LIGHT_COLOR = '#F5F7FA';
 
-    public const DEFAULT_INTRODUCTION = 'کلینیک ارتودنسی دکتر هومان شفاعی — درخواست نوبت آنلاین برای بررسی و تأیید پذیرش ثبت می‌شود و به‌خودی‌خود نوبت قطعی نیست.';
+    public const DEFAULT_INTRODUCTION = 'درخواست نوبت آنلاین برای بررسی پذیرش ثبت می‌شود و به‌خودی‌خود نوبت قطعی نیست.';
 
     public const DEFAULT_BOOKING_CLARIFICATION = 'ثبت درخواست آنلاین فقط یک درخواست است. پذیرش کلینیک آن را بررسی می‌کند و در صورت تأیید، نوبت قطعی می‌شود. تا قبل از تأیید، نوبت نهایی محسوب نمی‌شود.';
 
     public function clinicDisplayName(): string
     {
         return $this->setting(ClinicSetting::CLINIC_NAME, self::DEFAULT_CLINIC_DISPLAY_NAME);
+    }
+
+    /**
+     * Compact public chrome brand. Avoids repeating the doctor name already shown in hero.
+     */
+    public function publicNavBrand(): string
+    {
+        $custom = $this->rawSetting(ClinicSetting::CLINIC_NAME);
+
+        if ($custom !== null && ! str_contains($custom, $this->doctorDisplayName())) {
+            return $custom;
+        }
+
+        return self::DEFAULT_PUBLIC_NAV_BRAND;
     }
 
     public function doctorDisplayName(): string
@@ -104,6 +120,7 @@ final class ClinicIdentity
     {
         return [
             'clinicDisplayName' => $this->clinicDisplayName(),
+            'publicNavBrand' => $this->publicNavBrand(),
             'doctorDisplayName' => $this->doctorDisplayName(),
             'doctorTitle' => $this->doctorTitle(),
             'contactPhone' => $this->contactPhone(),

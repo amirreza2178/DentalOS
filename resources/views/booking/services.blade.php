@@ -1,6 +1,6 @@
 <x-booking-layout title="انتخاب خدمت" :step="$step">
     <header class="mb-6">
-        <p class="text-sm font-semibold text-teal-800">{{ $clinicIdentity->doctorDisplayName() }} · {{ $clinicIdentity->doctorTitle() }}</p>
+        <p class="text-sm font-semibold text-teal-800">{{ $clinicIdentity->doctorTitle() }}</p>
         <h1 class="mt-2 text-2xl font-bold text-[color:var(--dos-navy)]">خدمت مورد نظر را انتخاب کنید</h1>
         <p class="mt-2 text-sm leading-7 text-slate-600">{{ $clinicIdentity->bookingClarification() }}</p>
     </header>

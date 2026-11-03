@@ -28,6 +28,7 @@
 /storage/framework/schema-check.php
 /storage/framework/rotate-local-staff-password.php
 /storage/framework/seed-clinic-identity.php
+/storage/framework/refresh-clinic-intro.php
 Homestead.json
 Homestead.yaml
 Thumbs.db

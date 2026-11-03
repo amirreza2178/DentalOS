@@ -12,14 +12,24 @@ class ClinicIdentityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_public_home_uses_central_doctor_display_name_without_hardcoded_controllers(): void
+    public function test_public_home_promotes_doctor_name_once_in_hero_without_redundant_repeats(): void
     {
-        $this->get(route('home'))
+        $response = $this->get(route('home'))
             ->assertOk()
             ->assertSee(ClinicIdentity::DEFAULT_DOCTOR_DISPLAY_NAME, false)
             ->assertSee(ClinicIdentity::DEFAULT_DOCTOR_TITLE, false)
-            ->assertSee(ClinicIdentity::DEFAULT_CLINIC_DISPLAY_NAME, false)
-            ->assertSee('تأیید', false);
+            ->assertSee(ClinicIdentity::DEFAULT_PUBLIC_NAV_BRAND, false)
+            ->assertSee('شروع درخواست نوبت', false)
+            ->assertSee('مسیر درخواست نوبت', false)
+            ->assertSee('ورود کارکنان', false);
+
+        $html = $response->getContent();
+        $doctorMentions = substr_count($html, ClinicIdentity::DEFAULT_DOCTOR_DISPLAY_NAME);
+        // Title + hero H1 is enough; body copy must not keep restating the name.
+        $this->assertLessThanOrEqual(2, $doctorMentions, 'Doctor display name should not flood the homepage.');
+        $this->assertGreaterThanOrEqual(1, $doctorMentions);
+        $this->assertStringNotContainsString(ClinicIdentity::DEFAULT_CLINIC_DISPLAY_NAME, $html);
+        $this->assertSame(1, substr_count($html, 'شروع درخواست نوبت'));
     }
 
     public function test_admin_can_override_identity_centrally(): void
@@ -52,6 +62,7 @@ class ClinicIdentityTest extends TestCase
 
         $this->assertSame(ClinicIdentity::DEFAULT_DOCTOR_DISPLAY_NAME, $identity->doctorDisplayName());
         $this->assertSame(ClinicIdentity::DEFAULT_DOCTOR_TITLE, $identity->doctorTitle());
+        $this->assertSame(ClinicIdentity::DEFAULT_PUBLIC_NAV_BRAND, $identity->publicNavBrand());
         $this->assertFalse($identity->hasLogo());
         $this->assertFalse($identity->hasDoctorPortrait());
     }

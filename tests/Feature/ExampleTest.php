@@ -11,7 +11,8 @@ class ExampleTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee(ClinicIdentity::DEFAULT_CLINIC_DISPLAY_NAME, false)
+            ->assertSee(ClinicIdentity::DEFAULT_DOCTOR_DISPLAY_NAME, false)
+            ->assertSee(ClinicIdentity::DEFAULT_DOCTOR_TITLE, false)
             ->assertSee('شروع درخواست نوبت', false);
     }
 }
