@@ -36,12 +36,15 @@
             </div>
 
             @if ($canOperate)
-                <form method="GET" action="{{ route('reception.search') }}" class="mt-5 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm sm:flex-row sm:items-center">
-                    <input type="hidden" name="date" value="{{ $date }}">
-                    <label class="sr-only" for="command-search">جستجوی سریع بیمار</label>
-                    <input id="command-search" name="q" type="search" placeholder="نام، موبایل یا کد پرونده…" autocomplete="off" class="min-h-11 w-full grow rounded-xl border border-slate-300 px-4 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
-                    <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">جستجو</button>
-                </form>
+                <div class="mt-5 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm sm:flex-row sm:items-center">
+                    <form method="GET" action="{{ route('reception.search') }}" class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                        <input type="hidden" name="date" value="{{ $date }}">
+                        <label class="sr-only" for="command-search">جستجوی سریع بیمار</label>
+                        <input id="command-search" name="q" type="search" placeholder="نام، موبایل یا کد پرونده…" autocomplete="off" class="min-h-11 w-full grow rounded-xl border border-slate-300 px-4 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                        <button type="submit" class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">جستجو</button>
+                    </form>
+                    <a href="{{ route('patients.create') }}" class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-teal-700 bg-white px-4 text-sm font-semibold text-teal-900 hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-700">ثبت بیمار جدید</a>
+                </div>
             @endif
 
             <form method="GET" class="mt-3 flex flex-wrap items-end gap-3">
@@ -49,6 +52,9 @@
                     <span class="text-xs font-medium text-slate-600">تاریخ جلالی</span>
                     <input id="date" name="date" value="{{ $date }}" placeholder="۱۴۰۴/۰۱/۰۱" inputmode="numeric" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
                 </label>
+                @if (($onlineScope ?? 'day') === 'all')
+                    <input type="hidden" name="online" value="all">
+                @endif
                 <button type="submit" class="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">نمایش روز</button>
             </form>
         </div>
@@ -218,6 +224,16 @@
                                             <a href="{{ route('appointments.reschedule', $appointment) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">جابه‌جایی</a>
                                         @endif
                                     @endcan
+                                    @can('cancel', $appointment)
+                                        @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Cancelled))
+                                            <form method="POST" action="{{ route('appointments.cancel', $appointment) }}" onsubmit="return confirm('این نوبت لغو شود؟')">
+                                                @csrf
+                                                <input type="hidden" name="return_to" value="reception.day">
+                                                <input type="hidden" name="return_date" value="{{ $date }}">
+                                                <button type="submit" class="inline-flex min-h-10 items-center rounded-lg border border-rose-300 px-3 text-xs font-medium text-rose-800 hover:bg-rose-50">لغو</button>
+                                            </form>
+                                        @endif
+                                    @endcan
                                     @if ($visit)
                                         <a href="{{ route('reception.visits.show', $visit) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">ویزیت</a>
                                     @endif
@@ -297,6 +313,16 @@
                                                 @can('reschedule', $appointment)
                                                     @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Rescheduled))
                                                         <a href="{{ route('appointments.reschedule', $appointment) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">جابه‌جایی</a>
+                                                    @endif
+                                                @endcan
+                                                @can('cancel', $appointment)
+                                                    @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Cancelled))
+                                                        <form method="POST" action="{{ route('appointments.cancel', $appointment) }}" onsubmit="return confirm('این نوبت لغو شود؟')">
+                                                            @csrf
+                                                            <input type="hidden" name="return_to" value="reception.day">
+                                                            <input type="hidden" name="return_date" value="{{ $date }}">
+                                                            <button type="submit" class="w-full rounded-lg border border-rose-300 px-3 py-2 text-xs font-medium text-rose-800 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-700">لغو</button>
+                                                        </form>
                                                     @endif
                                                 @endcan
                                             </div>
@@ -396,12 +422,32 @@
 
             @if ($canOperate)
                 <section aria-labelledby="online-heading">
-                    <div class="mb-3 flex items-center justify-between gap-2">
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <h2 id="online-heading" class="text-base font-semibold text-[color:var(--dos-navy)]">درخواست‌های آنلاین</h2>
-                        <a href="{{ route('booking.requests.index') }}" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه</a>
+                        <div class="flex flex-wrap items-center gap-3">
+                            @if (($onlineScope ?? 'day') === 'day')
+                                <a href="{{ route('reception.day', ['date' => $date, 'online' => 'all']) }}#online-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه روزها@if (($pendingOnlineAllCount ?? 0) > $pendingOnline->count()) ({{ $pendingOnlineAllCount }})@endif</a>
+                            @else
+                                <a href="{{ route('reception.day', ['date' => $date]) }}#online-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همین روز</a>
+                            @endif
+                            <a href="{{ route('booking.requests.index') }}" class="text-xs font-semibold text-slate-600 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست کامل</a>
+                        </div>
                     </div>
+                    <p class="mb-2 text-xs text-slate-500">
+                        @if (($onlineScope ?? 'day') === 'day')
+                            نمایش پیش‌فرض: درخواست‌های معلق همین روز جلالی.
+                        @else
+                            نمایش همه درخواست‌های معلق، صرف‌نظر از روز نوبت.
+                        @endif
+                    </p>
                     @if ($pendingOnline->isEmpty())
-                        <p class="rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-600">درخواست معلقی نیست.</p>
+                        <p class="rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-600">
+                            @if (($onlineScope ?? 'day') === 'day' && ($pendingOnlineAllCount ?? 0) > 0)
+                                برای این روز درخواست معلقی نیست؛ {{ $pendingOnlineAllCount }} مورد در روزهای دیگر هست.
+                            @else
+                                درخواست معلقی نیست.
+                            @endif
+                        </p>
                     @else
                         <ul class="space-y-2">
                             @foreach ($pendingOnline as $request)

@@ -18,10 +18,12 @@ use Illuminate\Support\Collection;
 final class ReceptionCommandCenter
 {
     /**
+     * @param  'day'|'all'  $onlineScope
      * @return array<string, mixed>
      */
-    public function build(User $user, string $gregorian, ClinicDay $clinicDay): array
+    public function build(User $user, string $gregorian, ClinicDay $clinicDay, string $onlineScope = 'day'): array
     {
+        $onlineScope = $onlineScope === 'all' ? 'all' : 'day';
         $dayStart = $clinicDay->startOfDay($gregorian);
         $dayEnd = $clinicDay->endExclusive($gregorian);
         $specialistOnly = $user->hasRole(UserRole::Specialist)
@@ -96,14 +98,26 @@ final class ReceptionCommandCenter
         $inService = $queue->where('status', QueueStatus::InService)->values();
 
         $pendingOnline = collect();
+        $pendingOnlineAllCount = 0;
         $actionableFollowUps = collect();
         $alerts = collect();
 
         if ($canOperate) {
+            $pendingOnlineAllCount = Appointment::query()
+                ->where('source', AppointmentSource::Online->value)
+                ->where('status', AppointmentStatus::PendingApproval->value)
+                ->count();
+
             $pendingOnline = Appointment::query()
                 ->with(['patient:id,first_name,last_name,code,mobile', 'treatmentService:id,name'])
                 ->where('source', AppointmentSource::Online->value)
                 ->where('status', AppointmentStatus::PendingApproval->value)
+                ->when(
+                    $onlineScope === 'day',
+                    fn ($query) => $query
+                        ->where('starts_at', '>=', $dayStart)
+                        ->where('starts_at', '<', $dayEnd),
+                )
                 ->orderBy('starts_at')
                 ->limit(8)
                 ->get();
@@ -117,13 +131,27 @@ final class ReceptionCommandCenter
                 ])
                 ->orderBy('proposed_window_start')
                 ->orderByDesc('id')
-                ->limit(8)
-                ->get();
+                ->limit(24)
+                ->get()
+                ->unique(fn (FollowUp $followUp): string => implode('|', [
+                    (string) $followUp->patient_id,
+                    (string) $followUp->treatment_service_id,
+                    $followUp->status->value,
+                ]))
+                ->take(8)
+                ->values();
 
             if ($pendingOnline->isNotEmpty()) {
+                $scopeHint = $onlineScope === 'day' ? ' برای این روز' : '';
                 $alerts->push([
                     'tone' => 'attention',
-                    'label' => $pendingOnline->count().' درخواست آنلاین در انتظار تأیید',
+                    'label' => $pendingOnline->count().' درخواست آنلاین در انتظار تأیید'.$scopeHint,
+                    'href' => '#online-heading',
+                ]);
+            } elseif ($onlineScope === 'day' && $pendingOnlineAllCount > 0) {
+                $alerts->push([
+                    'tone' => 'neutral',
+                    'label' => $pendingOnlineAllCount.' درخواست آنلاین در روزهای دیگر در انتظار تأیید',
                     'href' => '#online-heading',
                 ]);
             }
@@ -173,6 +201,8 @@ final class ReceptionCommandCenter
         return [
             'specialistScoped' => $specialistOnly,
             'canOperate' => $canOperate,
+            'onlineScope' => $onlineScope,
+            'pendingOnlineAllCount' => $pendingOnlineAllCount,
             'schedule' => $schedule,
             'cancelledOrRescheduled' => $cancelledOrRescheduled,
             'upcoming' => $upcoming,

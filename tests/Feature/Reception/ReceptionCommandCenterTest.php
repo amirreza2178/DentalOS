@@ -130,4 +130,165 @@ class ReceptionCommandCenterTest extends TestCase
 
         $this->assertSame(AppointmentStatus::Confirmed, $pending->fresh()->status);
     }
+
+    public function test_command_center_defaults_online_pending_to_selected_day_with_all_days_toggle(): void
+    {
+        $clinic = $this->makeClinic();
+        $this->signIn(UserRole::Receptionist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+
+        $sameDay = Patient::query()->create([
+            'code' => 'P-ON-D',
+            'first_name' => 'امروز',
+            'last_name' => 'آنلاین',
+            'mobile' => '09120001111',
+            'mobile_normalized' => '09120001111',
+            'status' => 'active',
+        ]);
+        $otherDay = Patient::query()->create([
+            'code' => 'P-ON-O',
+            'first_name' => 'فردا',
+            'last_name' => 'آنلاین',
+            'mobile' => '09120002222',
+            'mobile_normalized' => '09120002222',
+            'status' => 'active',
+        ]);
+
+        Appointment::query()->create([
+            'public_reference' => (string) Str::uuid(),
+            'patient_id' => $sameDay->id,
+            'treatment_service_id' => $clinic['service']->id,
+            'starts_at' => '2026-11-07 09:00:00',
+            'ends_at' => '2026-11-07 09:40:00',
+            'status' => AppointmentStatus::PendingApproval->value,
+            'source' => AppointmentSource::Online->value,
+        ]);
+        Appointment::query()->create([
+            'public_reference' => (string) Str::uuid(),
+            'patient_id' => $otherDay->id,
+            'treatment_service_id' => $clinic['service']->id,
+            'starts_at' => '2026-11-08 09:00:00',
+            'ends_at' => '2026-11-08 09:40:00',
+            'status' => AppointmentStatus::PendingApproval->value,
+            'source' => AppointmentSource::Online->value,
+        ]);
+
+        $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee('امروز آنلاین', false)
+            ->assertDontSee('فردا آنلاین', false)
+            ->assertSee('همه روزها', false)
+            ->assertSee('ثبت بیمار جدید', false)
+            ->assertSee(route('patients.create', absolute: false), false);
+
+        $this->get(route('reception.day', ['date' => $date, 'online' => 'all']))
+            ->assertOk()
+            ->assertSee('امروز آنلاین', false)
+            ->assertSee('فردا آنلاین', false)
+            ->assertSee('همین روز', false);
+    }
+
+    public function test_command_center_dedupes_noisy_follow_up_rows_for_same_patient_action(): void
+    {
+        $clinic = $this->makeClinic();
+        $this->signIn(UserRole::Receptionist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+
+        FollowUp::query()->create([
+            'patient_id' => $clinic['patient']->id,
+            'treatment_service_id' => $clinic['service']->id,
+            'proposed_window_start' => '2026-11-10',
+            'proposed_window_end' => '2026-11-20',
+            'status' => FollowUpStatus::Proposed->value,
+            'created_by' => $clinic['specialist']->id,
+        ]);
+        FollowUp::query()->create([
+            'patient_id' => $clinic['patient']->id,
+            'treatment_service_id' => $clinic['service']->id,
+            'proposed_window_start' => '2026-11-12',
+            'proposed_window_end' => '2026-11-22',
+            'status' => FollowUpStatus::Proposed->value,
+            'created_by' => $clinic['specialist']->id,
+        ]);
+
+        $html = $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee($clinic['patient']->fullName(), false)
+            ->getContent();
+
+        $this->assertSame(
+            1,
+            substr_count($html, 'href="'.route('clinical.follow-ups.show', FollowUp::query()->oldest('id')->first()).'"'),
+            'duplicate follow-up rows for the same patient/service/status should collapse to one card',
+        );
+    }
+
+    public function test_receptionist_can_cancel_from_day_schedule_and_return_to_command_center(): void
+    {
+        $clinic = $this->makeClinic();
+        $this->signIn(UserRole::Receptionist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+        $appointment = $this->reserveAt($clinic, '08:00');
+
+        $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee('لغو', false)
+            ->assertSee(route('appointments.cancel', $appointment, absolute: false), false);
+
+        $this->post(route('appointments.cancel', $appointment), [
+            'return_to' => 'reception.day',
+            'return_date' => $date,
+        ])->assertRedirect(route('reception.day', ['date' => $date]).'#day-appointments-heading');
+
+        $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
+    }
+
+    public function test_receptionist_primary_nav_keeps_daily_path_and_moves_catalog_to_management(): void
+    {
+        $this->signIn(UserRole::Receptionist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+
+        $html = $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee('مرکز فرمان', false)
+            ->assertSee('بیماران', false)
+            ->assertSee('نوبت‌ها', false)
+            ->assertSee('درخواست‌های آنلاین', false)
+            ->assertSee('پیگیری‌ها', false)
+            ->assertSee('هفته', false)
+            ->assertSee('مدیریت / تنظیمات', false)
+            ->getContent();
+
+        $navStart = strpos($html, 'aria-label="ناوبری اصلی"');
+        $this->assertNotFalse($navStart);
+        $nav = substr($html, $navStart, 4500);
+        $managementPos = strpos($nav, 'مدیریت / تنظیمات');
+        $this->assertNotFalse($managementPos);
+
+        $primary = substr($nav, 0, $managementPos);
+        $secondary = substr($nav, $managementPos);
+
+        $this->assertStringContainsString('مرکز فرمان', $primary);
+        $this->assertStringContainsString('هفته', $primary);
+        $this->assertStringNotContainsString('متخصصان', $primary);
+        $this->assertStringNotContainsString('یونیت‌ها', $primary);
+        $this->assertStringNotContainsString('خدمات', $primary);
+        $this->assertStringContainsString('متخصصان', $secondary);
+        $this->assertStringContainsString('یونیت‌ها', $secondary);
+        $this->assertStringContainsString('خدمات', $secondary);
+    }
+
+    public function test_specialist_cannot_cancel_from_day_board(): void
+    {
+        $clinic = $this->makeClinic();
+        $appointment = $this->reserveAt($clinic, '08:00');
+        $this->signIn(UserRole::Specialist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+
+        $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertDontSee(route('appointments.cancel', $appointment, absolute: false), false);
+
+        $this->post(route('appointments.cancel', $appointment))->assertForbidden();
+    }
 }

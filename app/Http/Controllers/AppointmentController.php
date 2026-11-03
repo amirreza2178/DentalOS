@@ -136,6 +136,15 @@ class AppointmentController extends Controller
             return back()->withErrors(['status' => $exception->getMessage()]);
         }
 
+        if (request()->string('return_to')->toString() === 'reception.day') {
+            $date = trim(request()->string('return_date')->toString());
+
+            return redirect()
+                ->route('reception.day', array_filter(['date' => $date !== '' ? $date : null]))
+                ->with('status', 'نوبت لغو شد و منابعش برای رزرو بعدی آزاد شد.')
+                ->withFragment('day-appointments-heading');
+        }
+
         return redirect()
             ->route('appointments.show', $appointment)
             ->with('status', 'نوبت لغو شد و منابعش برای رزرو بعدی آزاد شد.');

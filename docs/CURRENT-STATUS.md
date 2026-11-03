@@ -1,8 +1,8 @@
 # وضعیت جاری DentalOS
 
 آخرین به‌روزرسانی: 2026-11-03  
-فاز: Day 10 — Acceptance & Operational Readiness  
-پیش از آن: Day 9 — Core Experience Excellence
+فاز: Reception UX Comfort Pass (پس از Day 10)  
+پیش از آن: Day 10 — Acceptance & Operational Readiness
 
 ---
 
@@ -38,25 +38,18 @@ Day 10: `7340da6`
 
 ---
 
-## آنچه در Day 10 پیاده شد
+## آنچه در Reception UX Comfort Pass پیاده شد
 
-### منطقه زمانی Asia/Tehran (تأیید محصول)
-- `APP_TIMEZONE=Asia/Tehran` در `.env.example`، `phpunit.xml` و پیش‌فرض `config/app.php`
-- استراتژی واحد: ساعت دیوار نوبت/شیفت در timezone برنامه ذخیره و نمایش داده می‌شود (بدون تبدیل پراکنده)
-- `ClinicDay` و برچسب‌های UI به‌روز شدند
-- `clinic_settings.timezone` در bootstrap محلی به `Asia/Tehran` هم‌تراز می‌شود
-- تست مرز روز و ثبات offset بدون DST پس از ۱۴۰۱/۲۰۲۲
+### ناوبری نقش‌آگاه پذیرش
+- مسیر روزانه پذیرش: مرکز فرمان، بیماران، نوبت‌ها، درخواست‌های آنلاین، پیگیری‌ها، هفته
+- موارد کمترروزانه (متخصصان، کادر، یونیت، خدمات، برنامه‌/وظایف درمانی، میز کار) زیر «مدیریت / تنظیمات»
+- ادمین همچنان گروه مدیریت غنی‌تر دارد؛ دسترسی متخصص/ادمین شکسته نشد
 
-### پذیرش و UX
-- دلیل رد درخواست آنلاین اجباری (Form Request + Action)
-- میانبر «رد با دلیل» و «جابه‌جایی» روی کارت موبایل مرکز فرمان
-- فهرست نوبت‌ها با مرز نیمه‌باز `ClinicDay` به‌جای `whereDate` خام
-
-### امنیت bootstrap
-- `dentalos:bootstrap-local-ops`: فقط `APP_ENV=local`، host لوپ‌بک، allowlist پایگاه، تأیید `SELECT DATABASE()`، بدون بازنویسی رمز کاربران موجود، بدون چاپ secret
-
-### پذیرش عملیاتی (بدون افشای PII)
-- درایور محلی Feature/HTTP: رد آنلاین با دلیل، ثبت بیمار، نوبت داخلی، جابه‌جایی، پیگیری، مرکز فرمان، برنامه متخصص، طرح درمان، وظیفه، به‌روزرسانی وضعیت، انکار جستجوی پذیرش برای متخصص
+### مرکز فرمان
+- CTA «ثبت بیمار جدید» کنار جستجوی سریع (مسیر واقعی `patients.create`؛ هدف لمسی موبایل حفظ شد)
+- «لغو» روی کارت موبایل و جدول دسکتاپ با همان Policy/`CancelAppointment` و confirm موجود؛ `return_to=reception.day` بدون تضعیف CSRF/authz
+- درخواست آنلاین معلق به‌صورت پیش‌فرض فقط برای روز جلالی انتخاب‌شده؛ لینک «همه روزها»
+- حذف ردیف‌های تکراری پیگیری برای همان بیمار + خدمت + وضعیت
 
 ## آنچه عمداً ساخته نشد
 
@@ -68,22 +61,19 @@ Billing، SMS/OTP، درگاه پرداخت، WebSocket، portal بیمار، mu
 
 | دستور | نتیجه |
 |------|--------|
-| `php artisan test` | **91 passed / 2 skipped / 521 assertions** |
-| `MARIADB_CONCURRENCY_TEST=1` + `test_dental_os` | **2 passed** |
-| `npm run build` | موفق |
-| Visual QA عمومی | موبایل/تبلت/دسکتاپ برای `/book` و اسلات‌ها |
-| Browser ورود کارکنان | **Blocked**: تزریق cookie نشست CLI در مرورگر تعبیه‌شده احراز هویت نشد؛ عمداً سیاست امنیتی برای تسهیل تست تضعیف نشد |
+| `php artisan test` | **96 passed / 2 skipped / 561 assertions** |
+| `ReceptionCommandCenterTest` | **8 passed** |
+| Browser پذیرش روی `/reception` | **OK** با نشست محلی موجود: CTA ثبت بیمار، لغو، «همه روزها»، ناوبری اولیه + «مدیریت / تنظیمات» |
+| `migrate:fresh` | اجرا نشد |
 
 ### تست‌های skipped (بدون فلگ همزمانی)
 1. `Tests\Feature\Clinical\MariaDbConcurrencyGateTest::test_dedicated_mariadb_concurrency_database_is_available_or_explicitly_blocked` — نیاز به `MARIADB_CONCURRENCY_TEST=1`
 2. `Tests\Feature\Clinical\MariaDbConcurrencyGateTest::test_innodb_two_processes_compete_for_one_slot_and_only_one_reserves` — همان شرط
-
-با فلگ و `test_dental_os` هر دو **resolved/passed**.
 
 ---
 
 ## کار بعدی پیشنهادی
 
 1. Billing پایه حضوری (Invoice/Payment/Balance) بدون درگاه آنلاین.  
-2. مرورگر واقعی کارکنان با ورود دستی امن (بدون ضعیف‌کردن auth).  
+2. اصطکاک باقی‌مانده پذیرش: reason اجباری برای لغو (فعلاً فقط confirm)، و فیلتر روز برای پیگیری‌ها.  
 3. یا portal بیمار پس از تصمیم پیامک.
