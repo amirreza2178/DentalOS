@@ -34,20 +34,21 @@
 - Follow-up پیشنهادی با تبدیل امن به نوبت
 - محدودسازی دسترسی متخصص و Security Headers/CSP
 
-### Day 7 — Billing و Audit و گزارش پایه
-- Invoice/Payment/Balance
-- گسترش ActivityLog
-- گزارش روزانه پذیرش
+### Day 7 — هویت کلینیک + مرکز فرمان پذیرش + امنیت ✅
+- ClinicIdentity مرکزی و برندینگ عمومی
+- Reception command center عملیاتی
+- سخت‌سازی confirmation/رمز محلی/audit لغو و جابه‌جایی
+- Billing عمداً به Day 8 موکول شد (اولویت Day 7 محصولی)
 
-### Day 8 — سخت‌سازی کیفیت
-- تست پذیرش معیارهای MVP
-- رفع باگ RTL/جلالی
+### Day 8 — Billing پایه + کیفیت
+- Invoice/Payment/Balance بدون درگاه
+- گزارش مالی/عملیاتی روزانه پذیرش
+- در صورت آمادگی: `dental_os_test` برای concurrency InnoDB
 - حساب بیمار + OTP پس از سرویس پیامک (در صورت تأیید)
-- پاکسازی مستندات وضعیت
 
 ---
 
-## کار بعدی دقیق (Day 7)
+## کار بعدی دقیق (Day 8)
 
 1. صورتحساب و پرداخت حضوری بدون درگاه.
 2. گسترش audit برای billing.

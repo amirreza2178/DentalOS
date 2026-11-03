@@ -24,6 +24,8 @@ enum OperationalEventType: string
     case TreatmentTaskStatusChanged = 'treatment_task_status_changed';
     case FollowUpCreated = 'follow_up_created';
     case FollowUpStatusChanged = 'follow_up_status_changed';
+    case AppointmentCancelled = 'appointment_cancelled';
+    case AppointmentRescheduled = 'appointment_rescheduled';
 
     public function label(): string
     {
@@ -48,6 +50,8 @@ enum OperationalEventType: string
             self::TreatmentTaskStatusChanged => 'تغییر وضعیت وظیفه درمانی',
             self::FollowUpCreated => 'ثبت پیگیری',
             self::FollowUpStatusChanged => 'تغییر وضعیت پیگیری',
+            self::AppointmentCancelled => 'لغو نوبت',
+            self::AppointmentRescheduled => 'جابه‌جایی نوبت',
         };
     }
 }

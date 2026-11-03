@@ -27,7 +27,9 @@ class SecurityHeaders
 
     private function contentSecurityPolicy(): string
     {
-        // Blade + Vite same-origin. Inline styles allowed for utility/focus; scripts stay self-only.
+        // Blade + Vite same-origin. Scripts stay self-only.
+        // style-src keeps 'unsafe-inline' because some Blade attributes and focus utilities
+        // still rely on inline CSS; tokens live in app.css, but full removal was not safe yet.
         $scriptSrc = "script-src 'self'";
         $connectSrc = "connect-src 'self'";
 

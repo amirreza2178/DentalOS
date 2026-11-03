@@ -1,8 +1,8 @@
-@props(['title'])
+@props(['title', 'autoRefreshSeconds' => null])
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    @include('partials.head', ['title' => $title])
+    @include('partials.head', ['title' => $title, 'autoRefreshSeconds' => $autoRefreshSeconds])
 </head>
 <body class="min-h-screen bg-slate-100 font-sans text-slate-900 antialiased">
     <a href="#content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2">رفتن به محتوا</a>

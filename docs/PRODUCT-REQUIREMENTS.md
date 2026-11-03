@@ -157,6 +157,7 @@ Task: `pending` → `assigned` → `in_progress` → `done` / `cancelled`
 تنظیمات در سطح کلینیک و قابل override در سطح `TreatmentService` (نوع خدمت/نوبت):
 
 - `booking_confirmation_mode`: `immediate` | `receptionist_approval`
+- هویت نمایشی کلینیک/پزشک از `ClinicIdentity` (Day 7): نام پزشک عمومی «دکتر هومان شفاعی»
 - منابع الزامی خدمت: specialist؟ clinical_staff_count؟ chair؟ duration_minutes
 - پنجره رزرو آنلاین (از چند ساعت بعد / تا چند روز بعد) — مقادیر پیش‌فرض موقتی تا تأیید کلینیک
 

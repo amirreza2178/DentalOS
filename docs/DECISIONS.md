@@ -267,3 +267,27 @@
 - **وضعیت:** confirmed
 - **تصمیم:** Middleware سراسری `SecurityHeaders` با nosniff، SAMEORIGIN، Referrer-Policy، Permissions-Policy و CSP (`script-src 'self'`؛ در local برای HMR `unsafe-eval` و ws). Inline style برای Tailwind utility مجاز است.
 - **دلیل:** سخت‌سازی بدون شکستن Blade/Vite.
+
+## D-045 — هویت عمومی کلینیک از ClinicIdentity
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** منبع واحد `ClinicIdentity` روی `clinic_settings`؛ پیش‌فرض نام پزشک «دکتر هومان شفاعی» بدون پسوند اضافی؛ بدون لوگو/پرتره تا دارایی تأییدشده؛ بدون ادعای پزشکی ساختگی.
+- **دلیل:** مالکیت برند کلینیک و جلوگیری از hardcode پراکنده در Blade/Controller.
+
+## D-046 — میز پذیرش = مرکز فرمان روزانه
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** `/reception` command center عملیاتی با داده واقعی (نوبت، صف، آنلاین، پیگیری، هشدار). تازه‌سازی با meta refresh ۹۰ثانیه؛ بدون WebSocket.
+- **دلیل:** دو منشی هم‌زمان نیاز به دید سریع و اقدام نزدیک به داده دارند.
+
+## D-047 — confirmation عمومی حداقل‌افشا
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** صفحه UUID فقط کد پیگیری، وضعیت، خدمت و زمان را نشان می‌دهد؛ نام/موبایل بیمار حذف شد؛ شناسه نامعتبر پاسخ عمومی ۴۰۴ می‌دهد.
+- **دلیل:** least disclosure روی endpoint عمومی.
+
+## D-048 — تست همزمانی InnoDB روی dental_os_test
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed به‌عنوان blocker
+- **تصمیم:** تا ایجاد پایگاه جدا `dental_os_test` و `MARIADB_CONCURRENCY_TEST=1`، suite همزمانی MariaDB skip می‌شود. هرگز روی `dental_os` اجرا نمی‌شود.
+- **دلیل:** جلوگیری از تست تخریبی روی داده عملیاتی محلی.

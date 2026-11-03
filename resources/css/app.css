@@ -12,6 +12,35 @@
     --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
 }
 
+:root {
+    --dos-navy: #0B1220;
+    --dos-accent: #55E6D0;
+    --dos-bg: #F5F7FA;
+}
+
+.dos-booking-shell {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dos-accent) 18%, transparent), transparent 42%),
+        linear-gradient(180deg, var(--dos-bg) 0%, #EEF2F7 100%);
+}
+
+.dos-hero-glow {
+    background: radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--dos-accent) 55%, transparent), transparent 45%);
+}
+
+.dos-status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: currentColor;
+}
+
+.dos-command-shell {
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--dos-accent) 12%, transparent), transparent 36%),
+        linear-gradient(180deg, #F5F7FA 0%, #EEF1F6 100%);
+}
+
 #app-sidebar.is-open {
     display: flex;
     flex-direction: column;

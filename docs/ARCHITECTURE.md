@@ -92,6 +92,8 @@ HTTP (routes/web.php, routes/auth)
 | Billing | Invoice/Charge/Payment/Balance محاسبه‌ای |
 | Audit | ActivityLog تغییرات مهم |
 | Settings | ClinicSetting کلید/مقدار نسخه‌پذیر |
+| Clinic identity | `ClinicIdentity` روی ClinicSetting؛ View composer سراسری |
+| Reception ops | `ReceptionCommandCenter` برای داشبورد روزانه پذیرش |
 
 ---
 

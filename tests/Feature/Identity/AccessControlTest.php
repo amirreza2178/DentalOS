@@ -143,5 +143,12 @@ class AccessControlTest extends TestCase
             ->assertSee('یادداشت بالینی در این مرحله ثبت نمی‌شود');
 
         $this->get(route('patients.clinical-notes', $unrelated))->assertForbidden();
+        $this->get(route('patients.show', $unrelated))->assertForbidden();
+        $this->get(route('patients.index'))
+            ->assertOk()
+            ->assertSee('کیان', false)
+            ->assertSee('P-900003', false)
+            ->assertDontSee('P-900004', false);
+        $this->get(route('reception.search', ['q' => 'کیان']))->assertForbidden();
     }
 }

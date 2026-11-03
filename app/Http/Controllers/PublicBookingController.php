@@ -11,6 +11,7 @@ use App\Models\TreatmentService;
 use App\Support\JalaliCalendar;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -153,16 +154,33 @@ class PublicBookingController extends Controller
         return redirect()->route('booking.confirmation', $appointment->public_reference);
     }
 
-    public function confirmation(string $reference, JalaliCalendar $calendar): View
+    public function confirmation(string $reference, JalaliCalendar $calendar): View|Response
     {
+        // UUID-only lookup; never expose sequential IDs or clinical/personal surplus.
         $appointment = Appointment::query()
             ->where('public_reference', $reference)
-            ->with(['treatmentService:id,name,default_duration_minutes', 'patient:id,first_name,last_name'])
-            ->firstOrFail();
+            ->with(['treatmentService:id,name'])
+            ->first();
+
+        if ($appointment === null) {
+            return response()->view('booking.confirmation', [
+                'found' => false,
+                'reference' => $reference,
+                'statusLabel' => null,
+                'serviceName' => null,
+                'whenLabel' => null,
+                'step' => 5,
+            ], 404);
+        }
 
         return view('booking.confirmation', [
-            'appointment' => $appointment,
-            'calendar' => $calendar,
+            'found' => true,
+            'reference' => $appointment->public_reference,
+            'statusLabel' => $appointment->status->label(),
+            'serviceName' => $appointment->treatmentService?->name,
+            'whenLabel' => $calendar->formatDate($appointment->starts_at)
+                .' — '
+                .$appointment->starts_at->timezone(config('app.timezone'))->format('H:i'),
             'step' => 5,
         ]);
     }

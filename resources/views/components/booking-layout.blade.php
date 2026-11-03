@@ -3,26 +3,23 @@
 <html lang="fa" dir="rtl">
 <head>
     @include('partials.head', ['title' => $title])
-    <style>
-        :root {
-            --dos-navy: #0B1220;
-            --dos-accent: #55E6D0;
-            --dos-bg: #F5F7FA;
-        }
-    </style>
 </head>
-<body class="min-h-screen font-sans antialiased text-[color:var(--dos-navy)]" style="background: radial-gradient(circle at top right, rgba(85,230,208,0.18), transparent 42%), linear-gradient(180deg, #F5F7FA 0%, #EEF2F7 100%);">
+<body class="dos-booking-shell min-h-screen font-sans text-[color:var(--dos-navy)] antialiased">
     <a href="#booking-content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2">رفتن به محتوا</a>
     <header class="border-b border-slate-200/80 bg-[color:var(--dos-navy)] text-white">
         <div class="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-4">
-            <a href="{{ route('home') }}" class="block focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">
-                <span class="text-xl font-bold tracking-tight">DentalOS</span>
-                <span class="mt-0.5 block text-xs text-slate-300">درخواست نوبت آنلاین</span>
+            <a href="{{ route('home') }}" class="block min-w-0 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">
+                @if ($clinicIdentity->hasLogo())
+                    <img src="{{ asset($clinicIdentity->logoPath()) }}" alt="{{ $clinicIdentity->clinicDisplayName() }}" class="h-9 w-auto max-w-[12rem] object-contain">
+                @else
+                    <span class="block text-lg font-bold leading-tight tracking-tight sm:text-xl">{{ $clinicIdentity->clinicDisplayName() }}</span>
+                @endif
+                <span class="mt-1 block truncate text-xs text-slate-300">{{ $clinicIdentity->doctorDisplayName() }} · {{ $clinicIdentity->doctorTitle() }}</span>
             </a>
             @auth
-                <a href="{{ route('dashboard') }}" class="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">میز کار</a>
+                <a href="{{ route('dashboard') }}" class="shrink-0 rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">میز کار</a>
             @else
-                <a href="{{ route('login') }}" class="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">ورود کارکنان</a>
+                <a href="{{ route('login') }}" class="shrink-0 rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">ورود کارکنان</a>
             @endauth
         </div>
     </header>

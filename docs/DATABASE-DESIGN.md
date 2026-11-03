@@ -267,6 +267,15 @@ Integrity: برای appointmentهای با وضعیت فعال، overlap روی 
 - Balance = sum(items) − sum(payments) در لایه دامنه.
 
 ### 3.15 `clinic_settings`
+
+کلید/مقدار بدون migration برای فیلدهای جدید هویت Day 7:
+
+- `clinic_name`, `doctor_display_name`, `doctor_title`
+- `clinic_address`, `clinic_intro`, `booking_display_note`
+- `primary_color`, `accent_color`, `logo_path`, `doctor_portrait_path`
+- به‌همراه کلیدهای قبلی: `contact_phone`, `timezone`, `currency`, `booking_confirmation_mode`
+
+### 3.15b `clinic_settings` (مرجع قبلی)
 کلید/مقدار: `booking_confirmation_mode`, `timezone`, `currency`, `no_show_grace_minutes`, ...
 
 ### 3.16 `activity_logs`

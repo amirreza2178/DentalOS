@@ -110,7 +110,7 @@ class ReceptionDeskTest extends TestCase
 
         $this->get(route('reception.day', ['date' => app(JalaliCalendar::class)->formatDate('2026-11-07')]))
             ->assertOk()
-            ->assertSee('صف انتظار فعال')
+            ->assertSee('صف انتظار')
             ->assertSee($clinic['otherPatient']->fullName());
     }
 
@@ -170,7 +170,7 @@ class ReceptionDeskTest extends TestCase
             ->assertOk()
             ->assertSee($clinic['patient']->fullName())
             ->assertSee('08:00')
-            ->assertDontSee('نوبتی برای این روز نیست');
+            ->assertDontSee('نوبت فعالی برای این روز نیست');
 
         $this->get(route('reception.week', ['date' => $jalali]))
             ->assertOk()
@@ -192,7 +192,8 @@ class ReceptionDeskTest extends TestCase
 
         $this->get(route('reception.day'))
             ->assertOk()
-            ->assertSee('نوبتی برای این روز نیست')
-            ->assertSee('صف خالی است');
+            ->assertSee('نوبت فعالی برای این روز نیست')
+            ->assertSee('مرکز فرمان پذیرش')
+            ->assertSee('خالی');
     }
 }

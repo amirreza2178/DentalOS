@@ -53,7 +53,7 @@
             <textarea id="patient_notes" name="patient_notes" rows="3" maxlength="300" class="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">{{ old('patient_notes') }}</textarea>
         </label>
 
-        <p class="text-xs leading-5 text-slate-500">درخواست شما پس از بررسی پذیرش قطعی می‌شود. این فرم حساب کاربری نمی‌سازد و به پرونده پزشکی موجود وصل نمی‌شود.</p>
+        <p class="text-xs leading-5 text-slate-500">{{ $clinicIdentity->bookingClarification() }} این فرم حساب کاربری نمی‌سازد و به پرونده پزشکی موجود وصل نمی‌شود.</p>
 
         <button type="submit" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[color:var(--dos-navy)] px-4 py-3 text-sm font-semibold text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
             ثبت درخواست نوبت

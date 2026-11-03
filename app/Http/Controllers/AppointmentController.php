@@ -126,7 +126,7 @@ class AppointmentController extends Controller
         $this->authorize('cancel', $appointment);
 
         try {
-            $cancel->cancel($appointment);
+            $cancel->cancel($appointment, request()->user());
         } catch (InvalidAppointmentTransitionException $exception) {
             return back()->withErrors(['status' => $exception->getMessage()]);
         }
@@ -166,7 +166,7 @@ class AppointmentController extends Controller
         );
 
         try {
-            $created = $reschedule->reschedule($appointment, $intent);
+            $created = $reschedule->reschedule($appointment, $intent, $request->user());
         } catch (SlotUnavailableException $exception) {
             return back()->withInput()->withErrors(['appointment_time' => $exception->reasons]);
         } catch (InvalidAppointmentTransitionException $exception) {

@@ -34,19 +34,21 @@ class UpdateTreatmentTaskStatus
             throw new AuthorizationException('تغییر وضعیت وظیفه مجاز نیست.');
         }
 
-        if ($task->status->isTerminal()) {
-            throw new InvalidTreatmentTransitionException('وظیفه پایان‌یافته بدون مجوز دوباره فعال نمی‌شود.');
-        }
-
-        if (! $task->status->canTransitionTo($next)) {
-            throw new InvalidTreatmentTransitionException('انتقال وضعیت وظیفه مجاز نیست.');
-        }
-
         if ($next === TreatmentTaskStatus::Completed && ! filled(trim((string) $completionNote))) {
             throw new InvalidTreatmentTransitionException('برای تکمیل وظیفه، یادداشت نتیجه الزامی است.');
         }
 
         return DB::transaction(function () use ($task, $actor, $next, $completionNote): TreatmentTask {
+            $task = TreatmentTask::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+
+            if ($task->status->isTerminal()) {
+                throw new InvalidTreatmentTransitionException('وظیفه پایان‌یافته بدون مجوز دوباره فعال نمی‌شود.');
+            }
+
+            if (! $task->status->canTransitionTo($next)) {
+                throw new InvalidTreatmentTransitionException('انتقال وضعیت وظیفه مجاز نیست.');
+            }
+
             $from = $task->status->value;
 
             $task->status = $next;

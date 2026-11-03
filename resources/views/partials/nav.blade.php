@@ -22,8 +22,12 @@
 @endphp
 <div class="flex items-center justify-between px-4 py-4 lg:block">
     <a href="{{ route('dashboard') }}" class="block rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-400">
-        <span class="text-lg font-bold">DentalOS</span>
-        <span class="mt-1 block text-xs text-slate-400">مدیریت کلینیک</span>
+        @if (($clinicIdentity ?? null)?->hasLogo())
+            <img src="{{ asset($clinicIdentity->logoPath()) }}" alt="{{ $clinicIdentity->clinicDisplayName() }}" class="h-8 w-auto max-w-[11rem] object-contain">
+        @else
+            <span class="text-base font-bold leading-snug">{{ $clinicIdentity->clinicDisplayName() }}</span>
+        @endif
+        <span class="mt-1 block text-xs text-slate-400">{{ $clinicIdentity->doctorDisplayName() }}</span>
     </a>
 </div>
 <nav class="flex flex-col gap-1 px-3 pb-6" aria-label="ناوبری اصلی">

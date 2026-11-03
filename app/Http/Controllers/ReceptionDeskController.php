@@ -8,7 +8,6 @@ use App\Actions\Reception\CompleteVisit;
 use App\Actions\Reception\RemoveFromQueue;
 use App\Actions\Reception\StartVisitService;
 use App\Enums\AppointmentStatus;
-use App\Enums\QueueStatus;
 use App\Enums\ResourceType;
 use App\Enums\UserRole;
 use App\Exceptions\Reception\InvalidVisitTransitionException;
@@ -19,7 +18,9 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\WaitingQueueEntry;
 use App\Support\ClinicDay;
+use App\Support\ClinicIdentity;
 use App\Support\JalaliCalendar;
+use App\Support\ReceptionCommandCenter;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -28,63 +29,28 @@ use Illuminate\View\View;
 
 class ReceptionDeskController extends Controller
 {
-    public function day(Request $request, JalaliCalendar $calendar, ClinicDay $clinicDay): View
-    {
+    public function day(
+        Request $request,
+        JalaliCalendar $calendar,
+        ClinicDay $clinicDay,
+        ReceptionCommandCenter $commandCenter,
+        ClinicIdentity $clinicIdentity,
+    ): View {
         $this->authorize('view', 'reception');
 
         [$gregorian, $dateInput, $dateError] = $this->resolveDate($request, $calendar, $clinicDay);
-        $dayStart = $clinicDay->startOfDay($gregorian);
-        $dayEnd = $clinicDay->endExclusive($gregorian);
+        $board = $commandCenter->build($request->user(), $gregorian, $clinicDay);
 
-        $user = $request->user();
-        $specialistOnly = $user->hasRole(UserRole::Specialist) && ! $user->hasRole(UserRole::Admin, UserRole::Receptionist);
-
-        $appointments = Appointment::query()
-            ->with([
-                'patient:id,first_name,last_name,code,mobile',
-                'treatmentService:id,name,default_duration_minutes',
-                'visit.latestQueueEntry',
-                'allocations',
-            ])
-            ->where('starts_at', '>=', $dayStart)
-            ->where('starts_at', '<', $dayEnd)
-            ->whereNotIn('status', [AppointmentStatus::Draft->value])
-            ->when(
-                $specialistOnly,
-                fn ($query) => $query->whereHas(
-                    'allocations',
-                    fn ($allocation) => $allocation
-                        ->where('resource_type', ResourceType::Specialist->value)
-                        ->where('resource_id', $user->id),
-                ),
-            )
-            ->orderBy('starts_at')
-            ->get();
-
-        $queue = $specialistOnly
-            ? collect()
-            : WaitingQueueEntry::query()
-                ->with([
-                    'visit.patient:id,first_name,last_name,code',
-                    'visit.appointment.treatmentService:id,name',
-                ])
-                ->forClinicDate($gregorian)
-                ->active()
-                ->orderBy('position')
-                ->get();
-
-        return view('reception.day', [
+        return view('reception.day', array_merge($board, [
             'date' => $dateInput,
             'dateError' => $dateError,
             'gregorian' => $gregorian,
-            'appointments' => $appointments,
-            'queue' => $queue,
             'calendar' => $calendar,
             'clinicDay' => $clinicDay,
             'timezoneLabel' => $clinicDay->timezone(),
-            'canOperate' => $request->user()->can('operate', 'reception'),
-            'specialistScoped' => $specialistOnly,
-        ]);
+            'clinicIdentity' => $clinicIdentity,
+            'autoRefreshSeconds' => $board['canOperate'] ? 90 : null,
+        ]));
     }
 
     public function week(Request $request, JalaliCalendar $calendar, ClinicDay $clinicDay): View

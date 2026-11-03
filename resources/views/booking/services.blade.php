@@ -1,27 +1,25 @@
 <x-booking-layout title="انتخاب خدمت" :step="$step">
     <header class="mb-6">
-        <h1 class="text-2xl font-bold text-[color:var(--dos-navy)]">انتخاب خدمت</h1>
-        <p class="mt-1 text-sm leading-6 text-slate-600">فقط خدمات فعال و قابل رزرو آنلاین نمایش داده می‌شوند.</p>
+        <p class="text-sm font-semibold text-teal-800">{{ $clinicIdentity->doctorDisplayName() }} · {{ $clinicIdentity->doctorTitle() }}</p>
+        <h1 class="mt-2 text-2xl font-bold text-[color:var(--dos-navy)]">خدمت مورد نظر را انتخاب کنید</h1>
+        <p class="mt-2 text-sm leading-7 text-slate-600">{{ $clinicIdentity->bookingClarification() }}</p>
     </header>
 
     @if ($services->isEmpty())
-        <div class="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-5 py-10 text-center">
-            <h2 class="text-lg font-semibold text-[color:var(--dos-navy)]">خدمت قابل رزروی نیست</h2>
-            <p class="mt-2 text-sm text-slate-600">فعلاً خدمت آنلاینی برای درخواست نوبت تعریف نشده است.</p>
-        </div>
+        <x-empty-state title="خدمت آنلاین فعالی نیست" description="در حال حاضر خدمت قابل رزرو آنلاین تعریف نشده است." />
     @else
         <ul class="space-y-3">
             @foreach ($services as $service)
                 <li>
-                    <a href="{{ route('booking.service', $service) }}" class="block rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition hover:border-[color:var(--dos-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-navy)]">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <h2 class="text-base font-semibold text-[color:var(--dos-navy)]">{{ $service->name }}</h2>
+                    <a href="{{ route('booking.service', $service) }}" class="block rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h2 class="text-lg font-semibold text-[color:var(--dos-navy)]">{{ $service->name }}</h2>
                                 @if ($service->description)
-                                    <p class="mt-1 text-sm leading-6 text-slate-600">{{ $service->description }}</p>
+                                    <p class="mt-2 text-sm leading-6 text-slate-600">{{ $service->description }}</p>
                                 @endif
                             </div>
-                            <span class="shrink-0 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $service->default_duration_minutes }} دقیقه</span>
+                            <p class="shrink-0 text-sm font-medium text-slate-500">{{ $service->default_duration_minutes }} دقیقه</p>
                         </div>
                     </a>
                 </li>

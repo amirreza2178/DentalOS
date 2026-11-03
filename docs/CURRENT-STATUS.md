@@ -1,14 +1,15 @@
 # وضعیت جاری DentalOS
 
 آخرین به‌روزرسانی: 2026-11-03  
-فاز: Day 6 — Clinical Workflow + Treatment Plan/Task + Follow-up + سخت‌سازی امنیتی
+فاز: Day 7 — هویت کلینیک + مرکز فرمان پذیرش + سخت‌سازی امنیتی
 
 ---
 
 ## فاز و مایلستون
 
-Day 1 تا Day 5 در commit `2f16bc5e85a73344a1b71a93a31f428bba85859d` ثبت شده‌اند.  
-Day 6 پیاده‌سازی شده و در commit جداگانه ثبت می‌شود.
+Day 1 تا Day 5: `2f16bc5e85a73344a1b71a93a31f428bba85859d`  
+Day 6: `8624aa99b204e7d6f67fd320026aafcc39b411c0`  
+Day 7: در commit جداگانه ثبت می‌شود.
 
 اپ محلی به **MariaDB** وصل است: پایگاه `dental_os`، کاربر `dental_os_app@127.0.0.1`.
 
@@ -17,9 +18,8 @@ Day 6 پیاده‌سازی شده و در commit جداگانه ثبت می‌�
 ## Git
 
 - شاخه: `master`
-- Checkpoint Day 2–5: `2f16bc5e85a73344a1b71a93a31f428bba85859d`
-- Remote: **وجود ندارد** — Push انجام نشد؛ URL مخزن DentalOS از کاربر خواسته می‌شود
-- `.env` در `.gitignore` است و commit نمی‌شود
+- Remote: در شروع Day 7 خالی بود؛ Push فقط پس از تأیید remote رسمی `https://github.com/amirreza2178/DentalOS`
+- `.env` و `storage/app/private/*` در `.gitignore` هستند
 
 ---
 
@@ -28,43 +28,41 @@ Day 6 پیاده‌سازی شده و در commit جداگانه ثبت می‌�
 | مورد | نتیجه |
 |------|--------|
 | اتصال Laravel | `pdo=ok` / `driver=mariadb` |
-| migrate:status | ۱۶ migration Ran (batch 1–3) |
-| جداول | ۲۷ جدول (`treatment_plans`, `treatment_tasks` اضافه شدند) |
-| Migration Day 6 | `2026_11_03_160000_create_treatment_plans_and_tasks_tables` DONE |
+| migrate:status | بدون migration جدید Day 7 (کلیدهای هویت روی `clinic_settings` موجود) |
+| `dental_os_test` | **وجود ندارد** — تست همزمانی InnoDB مسدود و مستند شد |
 | `migrate:fresh` | اجرا نشد |
 
-PHPUnit همچنان از `sqlite :memory:` استفاده می‌کند (`phpunit.xml`)، نه از `dental_os`.
+PHPUnit از `sqlite :memory:` استفاده می‌کند.
 
 ---
 
-## آنچه در Day 6 پیاده شد
+## آنچه در Day 7 پیاده شد
 
-### Treatment Plan / Task
-- جداول سبک `treatment_plans` و `treatment_tasks` (جدا از Appointment/Visit)
-- ثبت/ویرایش برنامه فقط توسط Admin/Specialist
-- تخصیص وظیفه بر اساس صلاحیت ثبت‌شده در `staff_profiles`
-- رد تخصیص به نیروی فاقد صلاحیت
-- نیروی درمانی فقط وظایف محول‌شده به خودش را می‌بیند
-- وضعیت‌ها: pending → assigned → in_progress → completed / cancelled
-- Audit از طریق `operational_events`
+### هویت مرکزی کلینیک
+- `App\Support\ClinicIdentity` + کلیدهای جدید در `ClinicSetting` (بدون migration جدید)
+- نام نمایشی پزشک پیش‌فرض: **دکتر هومان شفاعی**
+- عنوان: متخصص ارتودنسی
+- نام کلینیک پیش‌فرض: کلینیک ارتودنسی دکتر هومان شفاعی
+- صفحات عمومی رزرو با هویت تایپوگرافی (بدون لوگو/پرتره تأییدنشده)
 
-### Follow-up
-- جدول موجود `follow_ups` گسترش یافت (`operational_note`, `outcome_note`, `patient_visit_id`)
-- متخصص درخواست پیگیری ثبت می‌کند؛ نوبت خودکار ساخته نمی‌شود
-- منشی فهرست actionable را می‌بیند، پیشنهاد/رد می‌کند
-- تبدیل به نوبت فقط از مسیر موجود `appointments.create?follow_up_id=` با `FollowUpAuthorization`
+### مرکز فرمان پذیرش
+- `/reception` به command center روزانه تبدیل شد
+- نوبت‌های امروز، صف (waiting/called/in_service)، درخواست آنلاین، پیگیری، هشدارها، نوبت‌های پیش‌رو
+- جستجوی سریع، تأیید/رد آنلاین در همان صفحه، تازه‌سازی خودکار ۹۰ثانیه‌ای بدون WebSocket
+- کارت‌های موبایل + جدول دسکتاپ
 
 ### امنیت
-- محدوده بیمار متخصص به نوبت‌های تخصیص‌یافته
-- جستجوی میز پذیرش از متخصص برداشته شد (فقط admin/receptionist)
-- Policy برای Visit با مالکیت متخصص
-- منشی خلاصه بالینی را نمی‌بیند؛ فقط خلاصه عملیاتی
-- Middleware `SecurityHeaders` + CSP سازگار با Blade/Vite
-- Rate limit روی مسیرهای نوشتن بالینی
+- چرخش رمز موقت ضعیف `staff@dentalos.local` به credential قوی محلی (فقط در فایل gitignored خصوصی)
+- صفحه confirmation عمومی: حداقل داده، بدون نام/موبایل بیمار، 404 عمومی برای UUID نامعتبر
+- محدوده بیمار متخصص + تست‌های deny
+- رویداد عملیاتی برای لغو/جابه‌جایی نوبت
+- `lockForUpdate` روی تغییر وضعیت وظیفه درمانی
+- CSP: `style-src 'unsafe-inline'` هنوز لازم است؛ honestly documented
+- تست اختصاصی MariaDB concurrency: skip تا ساخت `dental_os_test`
 
 ## آنچه عمداً ساخته نشد
 
-EMR کامل، تشخیص/پیشنهاد خودکار درمان، OTP/SMS، پرداخت، حساب بیمار، seed آماری جعلی، سرویس خارجی Notification.
+Billing، SMS/OTP، درگاه پرداخت، CMS برندینگ پیچیده، multi-clinic، WebSocket، دانلود عکس پزشک، آمار جعلی.
 
 ---
 
@@ -72,13 +70,13 @@ EMR کامل، تشخیص/پیشنهاد خودکار درمان، OTP/SMS، پ�
 
 | دستور | نتیجه |
 |-------|--------|
-| `php artisan migrate --force` | Day 6 migration DONE روی MariaDB |
-| `php artisan test` | **64 passed / 388 assertions / ~21.5s** (SQLite :memory:) |
+| `php artisan test` | **73 passed / 1 skipped / 441 assertions / ~22s** |
 | `npm run build` | موفق؛ 61 ماژول |
-| مرورگر | Login/CSP/صفحه عمومی Desktop+Mobile OK؛ صفحات authenticated با session HTTP 200 + CSP |
+| Password rotation | انجام شد؛ رمز در گزارش چاپ نشد |
+| Visual QA | مرورگر عمومی + اندازه صفحه؛ authenticated در صورت امکان |
 
 ---
 
-## کار بعدی (Day 7)
+## کار بعدی (Day 8 پیشنهادی)
 
-Billing پایه (Invoice/Payment/Balance) + گسترش ActivityLog + گزارش روزانه پذیرش؛ بدون درگاه آنلاین.
+Billing پایه (Invoice/Payment/Balance) + گزارش مالی روزانه پذیرش؛ بدون درگاه آنلاین. یا تکمیل `dental_os_test` برای concurrency InnoDB.
