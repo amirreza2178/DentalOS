@@ -1,7 +1,7 @@
 <x-booking-layout title="اطلاعات تماس" :step="$step">
     <header class="mb-6">
-        <h1 class="text-2xl font-bold text-[color:var(--dos-navy)]">اطلاعات تماس و تأیید</h1>
-        <p class="mt-1 text-sm leading-6 text-slate-600">فقط اطلاعات لازم برای تماس پذیرش. اطلاعات پزشکی در این مرحله گرفته نمی‌شود.</p>
+        <h1 class="dos-title-lg">اطلاعات تماس و تأیید</h1>
+        <p class="dos-body mt-1 text-slate-600">فقط اطلاعات لازم برای تماس پذیرش. اطلاعات پزشکی در این مرحله گرفته نمی‌شود.</p>
     </header>
 
     <div class="mb-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm">

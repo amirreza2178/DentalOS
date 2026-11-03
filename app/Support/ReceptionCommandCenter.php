@@ -151,12 +151,32 @@ final class ReceptionCommandCenter
             }
         }
 
+        $nextClinical = $schedule
+            ->filter(fn (Appointment $appointment) => in_array($appointment->status, [
+                AppointmentStatus::InProgress,
+                AppointmentStatus::CheckedIn,
+                AppointmentStatus::Confirmed,
+                AppointmentStatus::PendingApproval,
+            ], true))
+            ->sortBy(function (Appointment $appointment) use ($now): string {
+                $priority = match ($appointment->status) {
+                    AppointmentStatus::InProgress => '0',
+                    AppointmentStatus::CheckedIn => '1',
+                    AppointmentStatus::Confirmed => $appointment->starts_at->lt($now) ? '2' : '3',
+                    default => '4',
+                };
+
+                return $priority.'|'.$appointment->starts_at->format('Y-m-d H:i:s').'|'.$appointment->id;
+            })
+            ->first();
+
         return [
             'specialistScoped' => $specialistOnly,
             'canOperate' => $canOperate,
             'schedule' => $schedule,
             'cancelledOrRescheduled' => $cancelledOrRescheduled,
             'upcoming' => $upcoming,
+            'nextClinical' => $nextClinical,
             'queue' => $queue,
             'waiting' => $waiting,
             'called' => $called,

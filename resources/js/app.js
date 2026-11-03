@@ -74,7 +74,67 @@ document.addEventListener('submit', (event) => {
         lastInteraction = Date.now();
     };
 
-    ['keydown', 'pointerdown', 'input', 'scroll'].forEach((name) => {
+    const isIgnoredControl = (el) => {
+        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
+            return true;
+        }
+
+        if (el.disabled || el.readOnly) {
+            return true;
+        }
+
+        const type = (el.type || '').toLowerCase();
+
+        return ['hidden', 'submit', 'button', 'reset', 'image', 'file'].includes(type);
+    };
+
+    /**
+     * Soft reload must never erase in-progress receptionist drafts
+     * (reject reasons, search boxes, date filters mid-edit, etc.).
+     */
+    const formHasUnsavedDraft = () => {
+        for (const form of document.querySelectorAll('form')) {
+            if (form.dataset.allowSoftRefresh === '1') {
+                continue;
+            }
+
+            for (const el of Array.from(form.elements)) {
+                if (isIgnoredControl(el)) {
+                    continue;
+                }
+
+                if (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) {
+                    if (el.checked !== el.defaultChecked) {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                if (el instanceof HTMLSelectElement) {
+                    const current = Array.from(el.selectedOptions).map((option) => option.value).join('\0');
+                    const defaults = Array.from(el.options)
+                        .filter((option) => option.defaultSelected)
+                        .map((option) => option.value)
+                        .join('\0');
+
+                    if (current !== defaults) {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                if ((el.value ?? '') !== (el.defaultValue ?? '')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+
+    ['keydown', 'pointerdown', 'input', 'change', 'scroll'].forEach((name) => {
         document.addEventListener(name, markInteraction, { passive: true });
     });
 
@@ -86,7 +146,7 @@ document.addEventListener('submit', (event) => {
         const active = document.activeElement;
         const typing = active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
 
-        if (typing || Date.now() - lastInteraction < 15000) {
+        if (typing || formHasUnsavedDraft() || Date.now() - lastInteraction < 20000) {
             return;
         }
 

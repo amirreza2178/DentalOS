@@ -16,6 +16,95 @@
     --dos-navy: #0B1220;
     --dos-accent: #55E6D0;
     --dos-bg: #F5F7FA;
+    --dos-text: #0B1220;
+    --dos-muted: #64748b;
+    --dos-line-tight: 1.35;
+    --dos-line-body: 1.7;
+    --dos-measure: 42rem;
+}
+
+.dos-title-xl {
+    font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+    line-height: var(--dos-line-tight);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--dos-navy);
+}
+
+.dos-title-lg {
+    font-size: clamp(1.375rem, 1.2rem + 0.7vw, 1.75rem);
+    line-height: var(--dos-line-tight);
+    font-weight: 700;
+    color: var(--dos-navy);
+}
+
+.dos-title-md {
+    font-size: 1.125rem;
+    line-height: 1.45;
+    font-weight: 600;
+    color: var(--dos-navy);
+}
+
+.dos-body {
+    font-size: 0.9375rem;
+    line-height: var(--dos-line-body);
+    max-width: var(--dos-measure);
+}
+
+.dos-meta {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--dos-muted);
+}
+
+.dos-label {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.dos-field {
+    min-height: 2.75rem;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5e1;
+    padding: 0.75rem 0.875rem;
+    font-size: 0.9375rem;
+}
+
+.dos-field:focus {
+    outline: none;
+    border-color: var(--dos-navy);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--dos-accent) 40%, transparent);
+}
+
+.dos-status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    border-radius: 0.5rem;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.dos-status-badge--pending {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.dos-status-badge--confirmed {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.dos-status-badge--neutral {
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
 }
 
 .dos-booking-shell {

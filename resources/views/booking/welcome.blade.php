@@ -4,10 +4,10 @@
             <div class="dos-hero-glow pointer-events-none absolute inset-0 opacity-40" aria-hidden="true"></div>
             <div class="relative max-w-xl">
                 <p class="text-sm font-semibold tracking-wide text-[color:var(--dos-accent)]">{{ $clinicIdentity->doctorTitle() }}</p>
-                <h1 class="mt-3 text-3xl font-bold leading-tight sm:text-4xl">{{ $clinicIdentity->doctorDisplayName() }}</h1>
+                <h1 class="dos-title-xl mt-3 text-white">{{ $clinicIdentity->doctorDisplayName() }}</h1>
                 <p class="mt-3 text-base font-medium text-white/90 sm:text-lg">{{ $clinicIdentity->publicNavBrand() }}</p>
-                <p class="mt-4 text-sm leading-7 text-slate-300 sm:text-base">{{ $clinicIdentity->introduction() }}</p>
-                <p class="mt-5 text-sm leading-7 text-slate-200/95">{{ $clinicIdentity->bookingClarification() }}</p>
+                <p class="dos-body mt-4 text-slate-300">{{ $clinicIdentity->introduction() }}</p>
+                <p class="dos-body mt-5 text-slate-200/95">{{ $clinicIdentity->bookingClarification() }}</p>
                 <div class="mt-8">
                     <a href="{{ route('booking.services') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-[color:var(--dos-accent)] px-5 py-3 text-sm font-bold text-[color:var(--dos-navy)] hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-white">شروع درخواست نوبت</a>
                 </div>

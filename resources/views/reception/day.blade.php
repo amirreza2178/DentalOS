@@ -72,17 +72,46 @@
         </div>
     @endif
 
-    <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6" aria-label="خلاصه عملیاتی روز">
-        @foreach ([
-            ['label' => 'نوبت فعال', 'value' => $counts['schedule']],
-            ['label' => 'در انتظار', 'value' => $counts['waiting']],
-            ['label' => 'فراخوان', 'value' => $counts['called']],
-            ['label' => 'در خدمت', 'value' => $counts['in_service']],
-            ['label' => 'آنلاین', 'value' => $counts['pending_online']],
-            ['label' => 'پیگیری', 'value' => $counts['follow_ups']],
-        ] as $stat)
+    @if ($specialistScoped && $nextClinical)
+        <section class="mb-5 rounded-2xl border border-teal-200 bg-white px-4 py-4 sm:px-5" aria-labelledby="next-clinical-heading">
+            <p class="text-xs font-semibold tracking-wide text-teal-800">اقدام بالینی بعدی</p>
+            <h2 id="next-clinical-heading" class="dos-title-md mt-1">
+                {{ $clinicDay->formatClock($nextClinical->starts_at) }} · {{ $nextClinical->patient?->fullName() }}
+            </h2>
+            <p class="dos-meta mt-1">
+                {{ $nextClinical->treatmentService?->name }}
+                · {{ $nextClinical->status->label() }}
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <a href="{{ route('appointments.show', $nextClinical) }}" class="inline-flex min-h-11 items-center rounded-lg bg-[color:var(--dos-navy)] px-4 text-sm font-semibold text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">جزئیات نوبت</a>
+                @if ($nextClinical->patient)
+                    <a href="{{ route('patients.show', $nextClinical->patient) }}" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">پرونده بیمار</a>
+                    <a href="{{ route('clinical.plans.create', $nextClinical->patient) }}" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">برنامه درمانی</a>
+                @endif
+            </div>
+        </section>
+    @elseif ($specialistScoped)
+        <p class="mb-5 rounded-xl border border-dashed border-slate-300 bg-white/70 px-4 py-3 text-sm text-slate-600">برای امروز نوبت تخصیص‌یافته‌ای در صف اقدام بالینی نیست.</p>
+    @endif
+
+    <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 {{ $specialistScoped ? 'xl:grid-cols-3' : 'xl:grid-cols-6' }}" aria-label="خلاصه عملیاتی روز">
+        @foreach (($specialistScoped
+            ? [
+                ['label' => 'نوبت من', 'value' => $counts['schedule']],
+                ['label' => 'پیش‌رو', 'value' => $upcoming->count()],
+                ['label' => 'تغییر یافته', 'value' => $counts['cancelled_rescheduled']],
+            ]
+            : [
+                ['label' => 'نوبت فعال', 'value' => $counts['schedule']],
+                ['label' => 'در انتظار', 'value' => $counts['waiting']],
+                ['label' => 'فراخوان', 'value' => $counts['called']],
+                ['label' => 'در خدمت', 'value' => $counts['in_service']],
+                ['label' => 'آنلاین', 'value' => $counts['pending_online']],
+                ['label' => 'پیگیری', 'value' => $counts['follow_ups']],
+            ]
+        ) as $stat)
             <div class="rounded-xl border border-slate-200 bg-white px-3 py-3">
-                <p class="text-xs text-slate-500">{{ $stat['label'] }}</p>
+                <p class="dos-meta">{{ $stat['label'] }}</p>
                 <p class="mt-1 text-2xl font-bold tabular-nums text-[color:var(--dos-navy)]">{{ $stat['value'] }}</p>
             </div>
         @endforeach
@@ -324,7 +353,7 @@
                                                 <p class="mt-2 text-sm">وضعیت: <span class="font-medium">{{ $entry->status->label() }}</span></p>
                                                 <p class="text-xs text-slate-500">ورود: {{ $clinicDay->formatClock($entry->arrived_at) }}
                                                     @if ($entry->status === \App\Enums\QueueStatus::Waiting)
-                                                        — انتظار حدود {{ max(0, $entry->arrived_at->diffInMinutes(now())) }} دقیقه
+                                                        — انتظار حدود {{ max(0, (int) round($entry->arrived_at->diffInMinutes(now()))) }} دقیقه
                                                     @endif
                                                 </p>
                                             </div>

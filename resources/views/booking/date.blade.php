@@ -1,8 +1,8 @@
 <x-booking-layout title="انتخاب تاریخ" :step="$step">
     <header class="mb-6">
         <p class="text-sm text-slate-500">{{ $service->name }} · {{ $service->default_duration_minutes }} دقیقه</p>
-        <h1 class="mt-1 text-2xl font-bold text-[color:var(--dos-navy)]">انتخاب تاریخ</h1>
-        <p class="mt-1 text-sm leading-6 text-slate-600">تاریخ مراجعه را انتخاب کنید. انتخاب زمان هنوز نوبت قطعی نیست و پس از بررسی پذیرش نهایی می‌شود.</p>
+        <h1 class="dos-title-lg mt-1">انتخاب تاریخ</h1>
+        <p class="dos-body mt-1 text-slate-600">تاریخ مراجعه را انتخاب کنید. انتخاب زمان هنوز نوبت قطعی نیست و پس از بررسی پذیرش نهایی می‌شود.</p>
     </header>
 
     <div class="mb-4 flex flex-wrap gap-2" role="group" aria-label="تاریخ‌های سریع">

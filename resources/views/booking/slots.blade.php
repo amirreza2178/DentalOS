@@ -1,8 +1,8 @@
 <x-booking-layout title="انتخاب ساعت" :step="$step">
     <header class="mb-6">
         <p class="text-sm text-slate-500">{{ $service->name }}</p>
-        <h1 class="mt-1 text-2xl font-bold text-[color:var(--dos-navy)]">زمان‌های آزاد</h1>
-        <p class="mt-1 text-sm leading-6 text-slate-600">
+        <h1 class="dos-title-lg mt-1">زمان‌های آزاد</h1>
+        <p class="dos-body mt-1 text-slate-600">
             @if ($gregorian)
                 تاریخ {{ $calendar->formatDate($gregorian) }} — فقط بازه‌های آزاد همین لحظه نمایش داده می‌شود.
             @else

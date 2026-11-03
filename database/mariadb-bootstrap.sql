@@ -18,3 +18,16 @@ FLUSH PRIVILEGES;
 
 SHOW DATABASES LIKE 'dental_os';
 SELECT user, host FROM mysql.user WHERE user = 'dental_os_app';
+
+-- Optional isolated concurrency database (admin only).
+-- Prefer dental_os_test when you have CREATE privilege.
+-- If the app user only has MariaDB PUBLIC grants on test_%, use test_dental_os instead.
+-- Never run concurrency suites against dental_os.
+
+-- CREATE DATABASE IF NOT EXISTS `dental_os_test`
+--   CHARACTER SET utf8mb4
+--   COLLATE utf8mb4_unicode_ci;
+-- GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, REFERENCES, DROP, CREATE TEMPORARY TABLES, LOCK TABLES
+--   ON `dental_os_test`.*
+--   TO 'dental_os_app'@'127.0.0.1';
+-- FLUSH PRIVILEGES;
