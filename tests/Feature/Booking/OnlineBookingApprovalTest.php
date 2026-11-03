@@ -27,7 +27,7 @@ class OnlineBookingApprovalTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow(Carbon::parse('2026-11-03 09:00:00', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2026-11-03 09:00:00', 'Asia/Tehran'));
     }
 
     protected function tearDown(): void
@@ -59,6 +59,9 @@ class OnlineBookingApprovalTest extends TestCase
             3,
             AppointmentResourceAllocation::query()->where('appointment_id', $pending->id)->count(),
         );
+
+        $this->post(route('booking.requests.reject', $other), [])
+            ->assertSessionHasErrors('decision_reason');
 
         $this->post(route('booking.requests.reject', $other), [
             'decision_reason' => 'شماره تماس پاسخگو نبود',
@@ -137,7 +140,7 @@ class OnlineBookingApprovalTest extends TestCase
             'last_name' => 'کاظمی'.$stamp,
             'mobile' => '0912'.str_pad($stamp, 7, '0'),
             'treatment_service_id' => $clinic['service']->id,
-            'starts_at' => Carbon::parse('2026-11-07 '.$time.':00', 'UTC'),
+            'starts_at' => Carbon::parse('2026-11-07 '.$time.':00', 'Asia/Tehran'),
             'patient_notes' => null,
             'idempotency_key' => (string) Str::uuid(),
         ]);

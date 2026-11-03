@@ -20,7 +20,7 @@
             </div>
             <div>
                 <dt class="text-slate-500">ساعت</dt>
-                <dd class="font-semibold text-[color:var(--dos-navy)]">{{ $time }} تا {{ $endsAt->format('H:i') }}</dd>
+                <dd class="font-semibold text-[color:var(--dos-navy)]">{{ $time }} تا {{ $endsAt->timezone(config('app.timezone'))->format('H:i') }}</dd>
             </div>
         </dl>
     </div>

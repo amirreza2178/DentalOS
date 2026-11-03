@@ -114,7 +114,7 @@ class MariaDbConcurrencyGateTest extends TestCase
             $this->markTestSkipped('Isolated MariaDB concurrency environment is not enabled.');
         }
 
-        Carbon::setTestNow(Carbon::parse('2026-11-07 07:00:00', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2026-11-07 07:00:00', 'Asia/Tehran'));
 
         try {
             $clinic = $this->makeClinic();
@@ -131,7 +131,7 @@ class MariaDbConcurrencyGateTest extends TestCase
             $data = new ReservationData(
                 patientId: $clinic['otherPatient']->id,
                 treatmentServiceId: $clinic['service']->id,
-                startsAt: Carbon::parse('2026-11-07 08:00:00', 'UTC'),
+                startsAt: Carbon::parse('2026-11-07 08:00:00', 'Asia/Tehran'),
                 specialistId: $clinic['specialist']->id,
                 clinicalStaffIds: [$clinic['assistant']->id],
                 chairId: $clinic['chair']->id,
@@ -143,7 +143,7 @@ class MariaDbConcurrencyGateTest extends TestCase
             app(ReserveAppointment::class)->reserve(new ReservationData(
                 patientId: $clinic['patient']->id,
                 treatmentServiceId: $clinic['service']->id,
-                startsAt: Carbon::parse('2026-11-07 08:00:00', 'UTC'),
+                startsAt: Carbon::parse('2026-11-07 08:00:00', 'Asia/Tehran'),
                 specialistId: $clinic['specialist']->id,
                 clinicalStaffIds: [$clinic['assistant']->id],
                 chairId: $clinic['chair']->id,

@@ -23,7 +23,7 @@
                         @if ($autoRefreshSeconds)
                             · تازه‌سازی آرام هر {{ $autoRefreshSeconds }} ثانیه هنگام بیکاری (بدون وب‌سوکت)
                         @endif
-                        · timezone برنامه: {{ $timezoneLabel }}
+                        · منطقه زمانی کلینیک: {{ $timezoneLabel }}
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -205,7 +205,7 @@
                                             <input type="hidden" name="return_date" value="{{ $date }}">
                                             <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white">تأیید آنلاین</button>
                                         </form>
-                                        <a href="{{ route('booking.requests.show', $appointment) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">بررسی</a>
+                                        <a href="{{ route('booking.requests.show', $appointment) }}#reject" class="inline-flex min-h-10 items-center rounded-lg border border-amber-300 bg-amber-50 px-3 text-xs font-medium text-amber-950">رد با دلیل</a>
                                     @endif
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed && ! $visit)
                                         <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
@@ -213,6 +213,11 @@
                                             <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white">چک‌این</button>
                                         </form>
                                     @endif
+                                    @can('reschedule', $appointment)
+                                        @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Rescheduled))
+                                            <a href="{{ route('appointments.reschedule', $appointment) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">جابه‌جایی</a>
+                                        @endif
+                                    @endcan
                                     @if ($visit)
                                         <a href="{{ route('reception.visits.show', $visit) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">ویزیت</a>
                                     @endif
@@ -417,8 +422,11 @@
                                         <input type="hidden" name="return_to" value="reception.day">
                                         <input type="hidden" name="return_date" value="{{ $date }}">
                                         <label class="block space-y-1" for="reject-reason-{{ $request->id }}">
-                                            <span class="text-xs font-medium text-slate-600">دلیل رد (اختیاری)</span>
-                                            <input id="reject-reason-{{ $request->id }}" name="decision_reason" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                                            <span class="text-xs font-medium text-slate-600">دلیل رد <span class="text-rose-700">*</span></span>
+                                            <input id="reject-reason-{{ $request->id }}" name="decision_reason" required minlength="3" maxlength="500" class="w-full min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                                            @error('decision_reason')
+                                                <span class="block text-xs text-rose-700">{{ $message }}</span>
+                                            @enderror
                                         </label>
                                         <button type="submit" class="min-h-10 rounded-lg border border-rose-300 px-3 text-xs font-medium text-rose-800 hover:bg-rose-50">رد درخواست</button>
                                     </form>

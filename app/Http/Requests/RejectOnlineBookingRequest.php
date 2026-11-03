@@ -21,7 +21,19 @@ class RejectOnlineBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'decision_reason' => ['nullable', 'string', 'max:500'],
+            'decision_reason' => ['required', 'string', 'min:3', 'max:500'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'decision_reason.required' => 'برای رد درخواست آنلاین، دلیل را بنویسید.',
+            'decision_reason.min' => 'دلیل رد باید حداقل ۳ نویسه باشد.',
+            'decision_reason.max' => 'دلیل رد نباید بیشتر از ۵۰۰ نویسه باشد.',
         ];
     }
 

@@ -6,8 +6,8 @@ use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
 /**
- * Civil-day helpers in the application timezone.
- * The clinic local timezone is still unconfirmed; do not label these bounds as Tehran time.
+ * Civil-day helpers in the approved clinic application timezone (Asia/Tehran).
+ * Wall-clock appointment and shift times are stored and interpreted in this timezone.
  */
 final class ClinicDay
 {

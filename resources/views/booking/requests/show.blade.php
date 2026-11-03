@@ -91,11 +91,14 @@
                 <button type="submit" class="min-h-11 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">تأیید درخواست</button>
             </form>
 
-            <form method="POST" action="{{ route('booking.requests.reject', $appointment) }}" data-booking-submit class="grow space-y-2">
+            <form id="reject" method="POST" action="{{ route('booking.requests.reject', $appointment) }}" data-booking-submit class="grow space-y-2">
                 @csrf
                 <label class="block space-y-1" for="decision_reason">
-                    <span class="text-sm font-medium">دلیل رد (اختیاری)</span>
-                    <textarea id="decision_reason" name="decision_reason" rows="2" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30"></textarea>
+                    <span class="text-sm font-medium">دلیل رد <span class="text-rose-700">*</span></span>
+                    <textarea id="decision_reason" name="decision_reason" rows="2" required minlength="3" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">{{ old('decision_reason') }}</textarea>
+                    @error('decision_reason')
+                        <span class="block text-xs text-rose-700">{{ $message }}</span>
+                    @enderror
                 </label>
                 <button type="submit" class="min-h-11 rounded-lg border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-600">رد درخواست</button>
             </form>

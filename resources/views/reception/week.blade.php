@@ -1,5 +1,5 @@
 <x-management-layout title="هفته پذیرش">
-    <x-page-header title="نمای هفتگی" description="هفته از شنبه تا جمعه (قرارداد موقت جلالی). مرز روزها با timezone برنامه {{ $timezoneLabel }} محاسبه می‌شود و هنوز ساعت رسمی کلینیک نیست.">
+    <x-page-header title="نمای هفتگی" description="هفته از شنبه تا جمعه (قرارداد موقت جلالی). مرز روزها با منطقه زمانی تأییدشده کلینیک {{ $timezoneLabel }} محاسبه می‌شود.">
         <a href="{{ route('reception.day', ['date' => $date]) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">نمای روزانه</a>
     </x-page-header>
 

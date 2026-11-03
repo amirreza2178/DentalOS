@@ -11,7 +11,7 @@
 - Policy برای Patient، User، Chair، TreatmentService، ClinicSetting، Appointment، WorkShift، Holiday، StaffSchedule، PatientVisit، WaitingQueueEntry، TreatmentPlan، TreatmentTask، FollowUp و Gate روی `reception`.
 - Actionهای Scheduling + Reception + Booking + `app/Actions/Clinical/` (Plan/Task/FollowUp).
 - رزرو عمومی مهمان روی همان `AvailabilityService` / `ReserveAppointment` با `AppointmentSource::Online`.
-- `JalaliCalendar` و `ClinicDay` برای مرز تاریخ/روز. ساعت‌ها با timezone برنامه (`UTC`) ذخیره می‌شوند.
+- `JalaliCalendar` و `ClinicDay` برای مرز تاریخ/روز. ساعت‌ها با timezone برنامه (`Asia/Tehran`) به‌صورت wall-clock ذخیره می‌شوند.
 - Middleware `SecurityHeaders` با CSP سازگار با Blade/Vite.
 - دیتابیس اجرایی فعلی MariaDB `dental_os` است. تست‌ها SQLite `:memory:` هستند.
 
@@ -130,7 +130,7 @@ HTTP (routes/web.php, routes/auth)
 
 ## 6. تاریخ، زمان، جلالی
 
-- ذخیره: ستون‌های `datetime` استاندارد. ساعت دیوار همان timezone برنامه است که هنوز `UTC` است. تا تأیید کلینیک تبدیل `Asia/Tehran` انجام نمی‌شود.
+- ذخیره: ستون‌های `datetime` استاندارد. ساعت دیوار در timezone تأییدشده برنامه (`Asia/Tehran`) است؛ تبدیل پراکنده انجام نمی‌شود.
 - نمایش: تبدیل به جلالی در لایه presentation.
 - ورودی کاربر جلالی → تبدیل به Gregorian/instant قبل از persistence.
 - هرگز تاریخ جلالی را به‌عنوان تنها منبع حقیقت در DB ذخیره نکنید.

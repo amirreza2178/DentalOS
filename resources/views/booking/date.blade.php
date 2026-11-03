@@ -18,7 +18,7 @@
         <label class="block space-y-2" for="date">
             <span class="text-sm font-medium">تاریخ جلالی دیگر</span>
             <input id="date" name="date" value="{{ old('date') }}" placeholder="{{ $todayJalali }}" inputmode="numeric" autocomplete="off" class="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40" aria-describedby="date-hint">
-            <span id="date-hint" class="block text-xs leading-5 text-slate-500">قالب: ۱۴۰۴/۰۸/۱۲ — می‌توانید از دکمه‌های بالا هم استفاده کنید.</span>
+            <span id="date-hint" class="block text-xs leading-5 text-slate-500">قالب: {{ $todayJalali }} — می‌توانید از دکمه‌های بالا هم استفاده کنید.</span>
         </label>
         <button type="submit" class="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[color:var(--dos-navy)] px-4 py-3 text-sm font-semibold text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)] sm:w-auto">مشاهده زمان‌های آزاد</button>
     </form>

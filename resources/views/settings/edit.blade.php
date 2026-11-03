@@ -46,7 +46,7 @@
         <section class="rounded-2xl border border-slate-200 bg-white p-5" aria-labelledby="ops-heading">
             <h2 id="ops-heading" class="text-base font-semibold text-slate-900">عملیات و سیاست</h2>
             <div class="mt-4 grid gap-4 md:grid-cols-2">
-                <x-text-field name="timezone" label="منطقه زمانی کلینیک" :value="$values['timezone']" placeholder="فقط پس از تأیید، مانند Asia/Tehran" />
+                <x-text-field name="timezone" label="منطقه زمانی کلینیک" :value="$values['timezone']" placeholder="Asia/Tehran" />
                 <x-text-field name="currency" label="واحد پول" :value="$values['currency']" placeholder="تعیین نشده" />
                 <x-select-field
                     name="booking_confirmation_mode"
@@ -56,7 +56,7 @@
                     placeholder="هنوز انتخاب نشده"
                 />
             </div>
-            <p class="mt-3 text-xs leading-5 text-slate-500">منطقه زمانی فعلی پیکربندی برنامه {{ $applicationTimezone }} است و تا تأیید کلینیک به‌عنوان واقعیت کسب‌وکار ثبت نمی‌شود.</p>
+            <p class="mt-3 text-xs leading-5 text-slate-500">منطقه زمانی عملیاتی تأییدشده Asia/Tehran است. پیکربندی برنامه اکنون {{ $applicationTimezone }} است؛ ساعت دیوار نوبت و شیفت با همین منطقه ذخیره و نمایش داده می‌شود.</p>
         </section>
 
         <button type="submit" class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-teal-700">ذخیره تنظیمات</button>

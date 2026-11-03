@@ -23,7 +23,7 @@ class Day9CoreExperienceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow(Carbon::parse('2026-11-03 09:00:00', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2026-11-03 09:00:00', 'Asia/Tehran'));
     }
 
     protected function tearDown(): void

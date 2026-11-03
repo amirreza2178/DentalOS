@@ -59,13 +59,12 @@ return [
     | Application Timezone
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | DentalOS stores and displays wall-clock clinic times in the approved
+    | operational timezone Asia/Tehran (no scattered per-feature offsets).
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    'timezone' => env('APP_TIMEZONE', 'Asia/Tehran'),
 
     /*
     |--------------------------------------------------------------------------

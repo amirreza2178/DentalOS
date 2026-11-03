@@ -26,7 +26,7 @@ trait BuildsClinicSchedule
      */
     protected function makeClinic(): array
     {
-        $day = Carbon::parse('2026-11-07 00:00:00', 'UTC');
+        $day = Carbon::parse('2026-11-07 00:00:00', 'Asia/Tehran');
 
         $shift = WorkShift::query()->create([
             'name' => 'نوبت صبح',
@@ -152,7 +152,7 @@ trait BuildsClinicSchedule
         return app(ReserveAppointment::class)->reserve(new ReservationData(
             patientId: $patient->id,
             treatmentServiceId: $clinic['service']->id,
-            startsAt: Carbon::parse('2026-11-07 '.$time.':00', 'UTC'),
+            startsAt: Carbon::parse('2026-11-07 '.$time.':00', 'Asia/Tehran'),
             specialistId: ($overrides['specialist'] ?? $clinic['specialist'])->id,
             clinicalStaffIds: $overrides['staff'] ?? [$clinic['assistant']->id],
             chairId: ($overrides['chair'] ?? $clinic['chair'])->id,

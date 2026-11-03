@@ -25,7 +25,7 @@ class ReceptionCommandCenterTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow(Carbon::parse('2026-11-07 07:30:00', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2026-11-07 07:30:00', 'Asia/Tehran'));
     }
 
     protected function tearDown(): void

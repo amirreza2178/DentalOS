@@ -23,6 +23,7 @@ use App\Models\FollowUp;
 use App\Models\Patient;
 use App\Models\TreatmentService;
 use App\Models\User;
+use App\Support\ClinicDay;
 use App\Support\JalaliCalendar;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ use InvalidArgumentException;
 
 class AppointmentController extends Controller
 {
-    public function index(Request $request, JalaliCalendar $calendar): View
+    public function index(Request $request, JalaliCalendar $calendar, ClinicDay $clinicDay): View
     {
         $this->authorize('viewAny', Appointment::class);
 
@@ -46,7 +47,11 @@ class AppointmentController extends Controller
 
         $appointments = Appointment::query()
             ->with(['patient', 'treatmentService'])
-            ->when($gregorian !== null, fn ($query) => $query->whereDate('starts_at', $gregorian))
+            ->when($gregorian !== null, function ($query) use ($gregorian, $clinicDay) {
+                $query
+                    ->where('starts_at', '>=', $clinicDay->startOfDay($gregorian))
+                    ->where('starts_at', '<', $clinicDay->endExclusive($gregorian));
+            })
             ->when(
                 $user !== null && $user->hasRole(UserRole::Specialist) && ! $user->hasRole(UserRole::Admin, UserRole::Receptionist),
                 fn ($query) => $query->whereHas(

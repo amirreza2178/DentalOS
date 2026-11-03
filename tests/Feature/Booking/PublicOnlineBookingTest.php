@@ -24,7 +24,7 @@ class PublicOnlineBookingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow(Carbon::parse('2026-11-03 09:00:00', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2026-11-03 09:00:00', 'Asia/Tehran'));
     }
 
     protected function tearDown(): void
@@ -122,7 +122,7 @@ class PublicOnlineBookingTest extends TestCase
         $this->post(route('booking.store'), $this->payload($clinic, $jalali, '08:00:00', (string) Str::uuid()))
             ->assertSessionHasErrors('appointment_time');
 
-        Carbon::setTestNow(Carbon::parse('2026-11-07 09:00:00', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2026-11-07 09:00:00', 'Asia/Tehran'));
         $clinic['service']->update(['is_bookable_online' => true]);
         $this->post(route('booking.store'), $this->payload($clinic, $jalali, '08:00:00', (string) Str::uuid()))
             ->assertSessionHasErrors('appointment_time');

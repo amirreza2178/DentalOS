@@ -9,7 +9,7 @@ class ClinicDayTest extends TestCase
 {
     public function test_week_bounds_start_on_saturday_and_day_is_half_open(): void
     {
-        $this->assertSame('UTC', config('app.timezone'));
+        $this->assertSame('Asia/Tehran', config('app.timezone'));
         $day = new ClinicDay;
 
         [$start, $end] = $day->weekBounds('2026-11-07');

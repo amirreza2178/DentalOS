@@ -8,6 +8,7 @@ use App\Enums\StaffType;
 use App\Enums\UserRole;
 use App\Enums\Weekday;
 use App\Models\Chair;
+use App\Models\ClinicSetting;
 use App\Models\StaffProfile;
 use App\Models\StaffSchedule;
 use App\Models\TreatmentService;
@@ -17,6 +18,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Local-only operational fixtures so booking and reception can be exercised end-to-end.
@@ -29,43 +31,135 @@ class BootstrapLocalOpsCommand extends Command
 
     protected $description = 'Bootstrap safe local chairs, shifts, bookable services, and ops accounts (local env only)';
 
+    /**
+     * @var list<string>
+     */
+    private const ALLOWED_DATABASES = ['dental_os', 'dental_os_local'];
+
+    /**
+     * @var list<string>
+     */
+    private const ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '::1'];
+
     public function handle(): int
     {
-        if (! app()->environment('local')) {
-            $this->error('Refused: dentalos:bootstrap-local-ops runs only in the local environment.');
+        $gate = $this->assertSafeLocalTarget();
+        if ($gate !== null) {
+            $this->error($gate);
 
             return self::FAILURE;
         }
 
-        if (config('database.default') === 'sqlite' && str_contains((string) config('database.connections.sqlite.database'), ':memory:')) {
-            $this->error('Refused: will not bootstrap against an in-memory SQLite database.');
-
-            return self::FAILURE;
-        }
-
-        $database = (string) config('database.connections.'.config('database.default').'.database');
-        $this->info("Target database: {$database}");
+        $connection = (string) config('database.default');
+        $database = (string) config('database.connections.'.$connection.'.database');
+        $this->info("Target database verified: {$database} (connection={$connection})");
 
         $credentialPath = storage_path('app/private/local-ops-credentials.txt');
         $generatedSecrets = [];
 
-        DB::transaction(function () use (&$generatedSecrets): void {
-            $chairs = $this->ensureChairs();
-            $shifts = $this->ensureShifts();
-            $users = $this->ensureUsers($generatedSecrets);
-            $this->ensureSchedules($users, $shifts);
-            $this->ensureServices($chairs);
-        });
+        try {
+            DB::transaction(function () use (&$generatedSecrets): void {
+                $this->ensureClinicTimezone();
+                $chairs = $this->ensureChairs();
+                $shifts = $this->ensureShifts();
+                $users = $this->ensureUsers($generatedSecrets);
+                $this->ensureSchedules($users, $shifts);
+                $this->ensureServices($chairs);
+            });
+        } catch (Throwable $exception) {
+            $this->error('Bootstrap aborted safely: '.$exception->getMessage());
+
+            return self::FAILURE;
+        }
 
         $this->writeCredentials($credentialPath, $generatedSecrets);
 
         $this->newLine();
         $this->info('Local operational fixtures are ready.');
         $this->line('Bookable services, chairs, weekday morning shifts, specialist, two receptionists, and clinical staff were ensured.');
+        $this->line('Clinic timezone setting aligned to Asia/Tehran (approved operational timezone).');
         $this->line('Generated account passwords (if any) were written only to storage/app/private/local-ops-credentials.txt (gitignored).');
         $this->warn('Do not commit credential files. Rotate passwords before any non-local use.');
 
         return self::SUCCESS;
+    }
+
+    private function assertSafeLocalTarget(): ?string
+    {
+        $env = (string) config('app.env');
+        if ($env === '' || $env === '0') {
+            return 'Refused: APP_ENV is inconclusive; bootstrap requires an explicit local environment.';
+        }
+
+        if ($env !== 'local') {
+            return 'Refused: dentalos:bootstrap-local-ops runs only when APP_ENV=local.';
+        }
+
+        if (! app()->environment('local')) {
+            return 'Refused: application environment check did not confirm local.';
+        }
+
+        $connection = (string) config('database.default');
+        if ($connection === '') {
+            return 'Refused: database connection name is inconclusive.';
+        }
+
+        $config = config('database.connections.'.$connection);
+        if (! is_array($config)) {
+            return 'Refused: database connection configuration is missing or inconclusive.';
+        }
+
+        if ($connection === 'sqlite') {
+            $database = (string) ($config['database'] ?? '');
+            if ($database === '' || str_contains($database, ':memory:')) {
+                return 'Refused: will not bootstrap against an empty or in-memory SQLite database.';
+            }
+
+            return 'Refused: bootstrap-local-ops targets the local MariaDB operational database only (not SQLite).';
+        }
+
+        if (! in_array($connection, ['mariadb', 'mysql'], true)) {
+            return 'Refused: unsupported database driver for local ops bootstrap.';
+        }
+
+        $host = strtolower((string) ($config['host'] ?? ''));
+        if ($host === '' || ! in_array($host, self::ALLOWED_HOSTS, true)) {
+            return 'Refused: database host must be a local loopback address; remote/production hosts are blocked.';
+        }
+
+        $database = (string) ($config['database'] ?? '');
+        if ($database === '') {
+            return 'Refused: target database name is empty or inconclusive.';
+        }
+
+        $lower = strtolower($database);
+        foreach (['production', 'prod', 'staging', 'stage', 'live'] as $forbidden) {
+            if (str_contains($lower, $forbidden)) {
+                return "Refused: database name looks like {$forbidden}; bootstrap never targets production or staging.";
+            }
+        }
+
+        if (! in_array($database, self::ALLOWED_DATABASES, true)) {
+            return 'Refused: database "'.$database.'" is not in the local allowlist (dental_os, dental_os_local).';
+        }
+
+        try {
+            $row = DB::connection($connection)->selectOne('select database() as name');
+            $actual = is_object($row) ? (string) ($row->name ?? '') : '';
+        } catch (Throwable $exception) {
+            return 'Refused: could not verify target database ('.$exception->getMessage().').';
+        }
+
+        if ($actual === '' || $actual !== $database) {
+            return 'Refused: SELECT DATABASE() did not match the configured local target (inconclusive safety check).';
+        }
+
+        return null;
+    }
+
+    private function ensureClinicTimezone(): void
+    {
+        ClinicSetting::putValue(ClinicSetting::TIMEZONE, 'Asia/Tehran');
     }
 
     /**
@@ -216,6 +310,7 @@ class BootstrapLocalOpsCommand extends Command
             $generatedSecrets[$email] = $plain;
             $this->line("Created user {$email}");
         } else {
+            // Never overwrite existing passwords or delete user rows.
             $user->fill([
                 'name' => $name,
                 'role' => $role,

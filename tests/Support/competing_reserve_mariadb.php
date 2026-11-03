@@ -19,15 +19,15 @@ if (! is_string($database) || ! in_array($database, $allowed, true) || $database
     exit(1);
 }
 
-putenv('APP_TIMEZONE=UTC');
+putenv('APP_TIMEZONE=Asia/Tehran');
 putenv('DB_CONNECTION=mariadb');
 putenv('DB_DATABASE='.$database);
 putenv('DB_URL=');
-$_ENV['APP_TIMEZONE'] = 'UTC';
+$_ENV['APP_TIMEZONE'] = 'Asia/Tehran';
 $_ENV['DB_CONNECTION'] = 'mariadb';
 $_ENV['DB_DATABASE'] = $database;
 $_ENV['DB_URL'] = '';
-$_SERVER['APP_TIMEZONE'] = 'UTC';
+$_SERVER['APP_TIMEZONE'] = 'Asia/Tehran';
 $_SERVER['DB_CONNECTION'] = 'mariadb';
 $_SERVER['DB_DATABASE'] = $database;
 $_SERVER['DB_URL'] = '';
@@ -37,7 +37,7 @@ $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
 config([
-    'app.timezone' => 'UTC',
+    'app.timezone' => 'Asia/Tehran',
     'database.default' => 'mariadb',
     'database.connections.mariadb.url' => null,
     'database.connections.mariadb.host' => (string) ($payload['host'] ?? '127.0.0.1'),
@@ -54,7 +54,7 @@ try {
     app(ReserveAppointment::class)->reserve(new ReservationData(
         patientId: (int) $payload['patient_id'],
         treatmentServiceId: (int) $payload['treatment_service_id'],
-        startsAt: Carbon::parse($payload['starts_at'], 'UTC'),
+        startsAt: Carbon::parse($payload['starts_at'], 'Asia/Tehran'),
         specialistId: (int) $payload['specialist_id'],
         clinicalStaffIds: array_map('intval', $payload['clinical_staff_ids']),
         chairId: (int) $payload['chair_id'],

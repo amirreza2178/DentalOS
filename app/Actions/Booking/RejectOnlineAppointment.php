@@ -23,7 +23,12 @@ class RejectOnlineAppointment
             throw new AuthorizationException('فقط پذیرش یا مدیر می‌تواند درخواست آنلاین را رد کند.');
         }
 
-        return DB::transaction(function () use ($appointment, $actor, $reason): Appointment {
+        $normalizedReason = is_string($reason) ? trim($reason) : '';
+        if ($normalizedReason === '') {
+            throw new InvalidAppointmentTransitionException('برای رد درخواست آنلاین، دلیل الزامی است.');
+        }
+
+        return DB::transaction(function () use ($appointment, $actor, $normalizedReason): Appointment {
             $locked = Appointment::query()->whereKey($appointment->id)->lockForUpdate()->firstOrFail();
 
             if ($locked->status === AppointmentStatus::Cancelled && $locked->source->value === 'online') {
@@ -42,7 +47,7 @@ class RejectOnlineAppointment
             $locked->status = AppointmentStatus::Cancelled;
             $locked->approved_by_user_id = $actor->id;
             $locked->decided_at = now();
-            $locked->decision_reason = filled($reason) ? $reason : null;
+            $locked->decision_reason = $normalizedReason;
             $locked->save();
 
             $this->events->record(

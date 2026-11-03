@@ -41,7 +41,7 @@ class SchedulingEngineTest extends TestCase
 
     public function test_migrations_do_not_seed_chairs_shifts_or_patients(): void
     {
-        $this->assertSame('UTC', config('app.timezone'));
+        $this->assertSame('Asia/Tehran', config('app.timezone'));
         $this->assertSame(0, Chair::query()->count());
         $this->assertSame(0, Patient::query()->count());
         $this->assertSame(0, WorkShift::query()->count());
@@ -53,11 +53,11 @@ class SchedulingEngineTest extends TestCase
         $clinic = $this->makeClinic();
         $appointment = $this->reserveAt($clinic, '08:00');
 
-        $this->assertSame('2026-11-07 08:40:00', $appointment->ends_at->timezone('UTC')->format('Y-m-d H:i:s'));
-        $this->assertNotSame('2026-11-07 09:00:00', $appointment->ends_at->timezone('UTC')->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-11-07 08:40:00', $appointment->ends_at->timezone(config('app.timezone'))->format('Y-m-d H:i:s'));
+        $this->assertNotSame('2026-11-07 09:00:00', $appointment->ends_at->timezone(config('app.timezone'))->format('Y-m-d H:i:s'));
         $this->assertSame(
             '2026-11-07 08:45:00',
-            $appointment->allocations->first()->ends_at->timezone('UTC')->format('Y-m-d H:i:s'),
+            $appointment->allocations->first()->ends_at->timezone(config('app.timezone'))->format('Y-m-d H:i:s'),
         );
 
         $this->assertSame(2, Chair::query()->count());
@@ -476,7 +476,7 @@ class SchedulingEngineTest extends TestCase
         ])->assertRedirect();
 
         $appointment = Appointment::query()->firstOrFail();
-        $this->assertSame('2026-11-07 08:40:00', $appointment->ends_at->timezone('UTC')->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-11-07 08:40:00', $appointment->ends_at->timezone(config('app.timezone'))->format('Y-m-d H:i:s'));
         $this->assertSame($receptionist->id, $appointment->booked_by_user_id);
         $this->get(route('appointments.show', $appointment))
             ->assertOk()
@@ -598,7 +598,7 @@ class SchedulingEngineTest extends TestCase
         return new ReservationData(
             patientId: $patient->id,
             treatmentServiceId: $clinic['service']->id,
-            startsAt: Carbon::parse('2026-11-07 '.$time.':00', 'UTC'),
+            startsAt: Carbon::parse('2026-11-07 '.$time.':00', 'Asia/Tehran'),
             specialistId: ($overrides['specialist'] ?? $clinic['specialist'])->id,
             clinicalStaffIds: $overrides['staff'] ?? [$clinic['assistant']->id],
             chairId: ($overrides['chair'] ?? $clinic['chair'])->id,
