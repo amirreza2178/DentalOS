@@ -9,7 +9,7 @@
 
 Day 1 تا Day 5: `2f16bc5e85a73344a1b71a93a31f428bba85859d`  
 Day 6: `8624aa99b204e7d6f67fd320026aafcc39b411c0`  
-Day 7: در commit جداگانه ثبت می‌شود.
+Day 7: `67fa2d8b10683fbe0badd51a96fbeef28bfe2560`
 
 اپ محلی به **MariaDB** وصل است: پایگاه `dental_os`، کاربر `dental_os_app@127.0.0.1`.
 
@@ -18,7 +18,8 @@ Day 7: در commit جداگانه ثبت می‌شود.
 ## Git
 
 - شاخه: `master`
-- Remote: در شروع Day 7 خالی بود؛ Push فقط پس از تأیید remote رسمی `https://github.com/amirreza2178/DentalOS`
+- Remote: `origin` = `https://github.com/amirreza2178/DentalOS.git`
+- Push Day 7: انجام شد؛ شاخه با `origin/master` هم‌تراز است
 - `.env` و `storage/app/private/*` در `.gitignore` هستند
 
 ---
