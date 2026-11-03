@@ -1,41 +1,33 @@
 # برنامه پیاده‌سازی DentalOS (پنجره حدوداً ۸ روزه)
 
-تاریخ به‌روزرسانی: 2026-11-02
+تاریخ به‌روزرسانی: 2026-11-03
 
 ---
 
 ## نقشه روزها (پیشنهادی)
 
-### Day 1 — Foundation و مشخصات ✅ (در حال تکمیل)
-- ممیزی محیط
-- مستندات محصول/معماری/داده
-- نصب Laravel 13 در ریشه پروژه
-- Git init، npm install، پیکربندی تست SQLite
-- بدون migration دامنه زودرس
+### Day 1 — Foundation و مشخصات ✅
+- ممیزی محیط، مستندات، Laravel 13 در ریشه، Git، npm، تست SQLite
 
-### Day 2 — هویت، نقش‌ها، بیمار، تنظیمات پایه
-- مدل User/Role/StaffProfile/Patient
-- Policies اولیه
-- UI فارسی RTL پایه (layout)
-- ClinicSettings و Chairs/Services CRUD حداقلی ادمین
+### Day 2 — هویت، بیمار، کارکنان، یونیت، خدمت، تنظیمات ✅
+- نقش، Policy، بیمار، پروفایل کارکنان، کاتالوگ، RTL
 
-### Day 3 — موتور Scheduling
-- شیفت/تعطیلات
-- AvailabilityService
-- Appointment + ResourceAllocation
-- تست ضد double-booking و concurrency
+### Day 3 — موتور Scheduling ✅
+- شیفت/تعطیلی/availability/appointment/allocation/قفل رزرو
 
-### Day 4 — میز پذیرش
+### Day 4 — میز پذیرش ✅
 - تقویم روزانه/هفتگی
-- رزرو داخلی سریع
-- Check-in، Visit، Waiting Queue
-- جستجوی بیمار بهینه
+- جستجوی بیمار روی میز
+- Check-in، PatientVisit، WaitingQueue، operational_events
+- رزرو داخلی از قبل در Day 3 موجود بود و دوباره ساخته نشد
+- MariaDB بررسی شد؛ اتصال اپ هنوز برقرار نشد
 
-### Day 5 — پرتال بیمار و سیاست تأیید
-- ثبت‌نام/ورود بیمار
-- مشاهده اسلات و رزرو آنلاین
-- مسیر pending_approval
-- جداسازی داده self-only
+### Day 5 — Public Booking + تأیید پذیرش ✅
+- رزرو آنلاین مهمان بدون حساب/OTP
+- AvailabilityService مشترک + pending_approval
+- تأیید/رد پذیرش با قفل و audit رویداد
+- محدودیت مشاهده متخصص به نوبت خودش
+- MariaDB migrate غیرتخریبی ستون‌های Day 5
 
 ### Day 6 — بالینی سبک + Follow-up
 - TreatmentPlan/Task
@@ -44,54 +36,31 @@
 
 ### Day 7 — Billing و Audit و گزارش پایه
 - Invoice/Payment/Balance
-- ActivityLog رویدادهای مهم
-- گزارش روزانه پذیرش (نوبت‌ها، no-show، دریافت‌ها)
+- گسترش ActivityLog
+- گزارش روزانه پذیرش
 
 ### Day 8 — سخت‌سازی کیفیت
 - تست پذیرش معیارهای MVP
 - رفع باگ RTL/جلالی
-- آماده‌سازی استقرار MariaDB
+- حساب بیمار + OTP پس از سرویس پیامک (در صورت تأیید)
 - پاکسازی مستندات وضعیت
 
 ---
 
-## ترتیب فنی پیشنهادی ماژول‌ها
+## کار بعدی دقیق (Day 6)
 
-1. Auth/Roles  
-2. Patients  
-3. Catalog + Resources  
-4. Scheduling core  
-5. Reception UX  
-6. Patient portal  
-7. Clinical light  
-8. Billing  
-9. Audit/Reports  
-
----
-
-## تعریف Done برای هر ماژول
-
-- Migration + Model + Policy/Request  
-- مسیر UI یا API لازم  
-- تست Feature حداقل مسیر خوشحال + یک شکست مهم  
-- به‌روزرسانی CURRENT-STATUS و در صورت تصمیم جدید DECISIONS  
-
----
-
-## کار بعدی دقیق پس از Day 1
-
-1. گرفتن credential معتبر MariaDB از مالک محیط یا ساخت کاربر محلی غیر GSSAPI و verify اتصال.
-2. تنظیم `.env` اپ برای MariaDB بدون commit کردن اسرار (فعلاً اسکلت روی sqlite پیش‌فرض Laravel است).
-3. پیاده‌سازی Enum نقش‌ها + migrationهای Identity/Patient/Settings/Chairs/Services.
-4. layout Blade RTL فارسی + نمایش جلالی پایه.
-5. اولین تست‌های Feature برای Patient create و ممنوعیت دسترسی متقابل.
+1. طرح درمان/وظیفه سبک بدون تشخیص خودکار.
+2. Follow-up پیشنهادی با تبدیل فقط پس از تأیید انسان.
+3. حساب بیمار و درگاه را شروع نکنید مگر تصمیم صریح کلینیک.
 
 ---
 
 ## چیزهایی که عمداً به تعویق افتاده‌اند
 
-- همه migrationهای دامنه
+- migration طرح درمان، صورتحساب و audit کامل
 - seed داده جعلی آماری
 - درگاه پرداخت
 - SPA
 - multi-tenancy
+- walk-in بدون نوبت
+- اتوماسیون no-show

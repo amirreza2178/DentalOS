@@ -1,7 +1,23 @@
 # طراحی پایگاه‌داده DentalOS
 
-تاریخ: 2026-11-02  
-وضعیت: طراحی اولیه (هنوز migration دامنه کسب‌وکار ایجاد نشده)
+تاریخ: 2026-11-03  
+وضعیت: ۱۵ migration روی MariaDB `dental_os` Ran هستند. تست‌ها همچنان SQLite `:memory:` هستند.
+
+## جدول‌های موجود
+
+- `users` به‌علاوه `mobile`، `role`، `is_active`
+- `staff_profiles`
+- `patients` شامل `mobile_normalized`، `alt_phone`، `identity_status` و soft delete
+- `chairs` به‌علاوه `capabilities` از نوع json
+- `treatment_services` با مدت، `buffer_minutes`، نیاز متخصص، تعداد کادر بالینی، نیاز یونیت، قابلیت‌های لازم یونیت، `booking_confirmation_mode` و `is_bookable_online`
+- `clinic_settings` کلید/مقدار
+- `work_shifts`، `shift_breaks`، `staff_schedules`، `holidays`
+- `follow_ups`، `appointments` (به‌علاوه `public_reference`، `decision_reason`، `decided_at`)، `appointment_resource_allocations`، `reservation_locks`
+- `patient_visits`، `waiting_queue_entries`، `operational_events`
+
+`follow_ups.converted_appointment_id` ایندکس است و کلید خارجی به `appointments` ندارد تا وابستگی دایره‌ای ساخته نشود.
+
+`patients.mobile` یکتا نیست. `patients.national_id` اگر مقدار داشته باشد یکتا است. `users.mobile` برای حساب کاربری یکتا است و با موبایل مشترک خانواده‌ها یکی نیست.
 
 هدف DB اپلیکیشن: **MariaDB**  
 هدف تست خودکار: **SQLite in-memory** (سازگار با اسکلت Laravel فعلی)
@@ -81,6 +97,7 @@ activity_logs
 | birth_date | date nullable | ذخیره Gregorian |
 | gender | string nullable | |
 | status | string | active/inactive |
+| identity_status | string | verified / unverified_online |
 | notes_admin | text nullable | غیر بالینی |
 | timestamps, softDeletes | | |
 
@@ -132,7 +149,7 @@ activity_logs
 - `staff_schedules`: تخصیص کاربر به تاریخ/الگو + override.
 - `shift_breaks`: بازه‌های استراحت داخل شیفت.
 
-جزئیات ستون‌ها در پیاده‌سازی Day 2–3 نهایی می‌شود؛ اصل: availability فقط داخل شیفت فعال و خارج break/holiday.
+ستون‌های پیاده‌شده: `work_shifts` نام، `weekday` از ۰ (یکشنبه) تا ۶ (شنبه)، `starts_at`/`ends_at` از نوع time، `is_active`. `shift_breaks` به شیفت وصل است. `staff_schedules` یا به یک شیفت تکرارشونده وصل است، یا تاریخ و ساعت مشخص دارد، یا با `is_unavailable` همان روز را می‌بندد. ردیف تاریخ‌دار برای همان روز جایگزین الگوی تکرارشونده است و مرخصی بر هر دو مقدم است. availability فقط داخل شیفت فعال و خارج break/holiday و فقط برای کارکنان فعال با برنامه فعال محاسبه می‌شود.
 
 ### 3.7 `holidays`
 | ستون | نوع |
@@ -158,6 +175,9 @@ activity_logs
 | rescheduled_from_id | FK nullable | |
 | follow_up_id | FK nullable | |
 | patient_notes | text nullable | غیر بالینی |
+| public_reference | uuid nullable unique | کد پیگیری عمومی رزرو آنلاین |
+| decision_reason | text nullable | دلیل رد پذیرش |
+| decided_at | timestamp nullable | زمان تأیید/رد |
 | timestamps, softDeletes | | |
 
 ایندکس پیشنهادی: `(status, starts_at)`, `(patient_id, starts_at)`.
@@ -188,9 +208,12 @@ Integrity: برای appointmentهای با وضعیت فعال، overlap روی 
 |------|-----|-------|
 | id | PK | |
 | patient_id | FK | |
-| appointment_id | FK nullable unique | |
-| status | string | |
-| arrived_at | datetime nullable | |
+| appointment_id | FK nullable unique | یک ویزیت فعال برای هر نوبت |
+| status | string index | waiting/called/in_progress/completed/cancelled |
+| checked_in_by_user_id | FK users nullable | |
+| arrived_at | datetime nullable index | |
+| called_at | datetime nullable | |
+| started_at | datetime nullable | |
 | completed_at | datetime nullable | |
 | timestamps | | |
 
@@ -199,13 +222,20 @@ Integrity: برای appointmentهای با وضعیت فعال، overlap روی 
 |------|-----|-------|
 | id | PK | |
 | patient_visit_id | FK | |
-| queue_date | date index | |
-| position | int | یا اولویت زمان |
-| status | string | |
+| queue_date | date index | تاریخ مدنی در timezone برنامه |
+| position | unsigned int | یکتا با queue_date |
+| status | string index | waiting/called/in_service/completed/removed |
+| arrived_at | datetime | |
 | called_at | datetime nullable | |
+| started_at | datetime nullable | |
+| completed_at | datetime nullable | |
+| called_by_user_id | FK users nullable | |
 | timestamps | | |
 
-قانون: حداکثر یک صف `waiting|called|with_staff` باز per visit.
+قانون پیاده‌شده: حداکثر یک صف فعال (`waiting|called|in_service`) per visit در لایه دامنه. ترتیب روز با `position`. ایندکس `queue_day_status_position_idx`.
+
+### 3.11b `operational_events`
+رویدادهای حداقلی پذیرش: نوع رویداد، actor، subject morph، from/to status. بدون کپی داده بالینی حساس.
 
 ### 3.12 `treatment_plans` / `treatment_tasks`
 Plan متعلق به patient (+ اختیاری created_by specialist).  
@@ -221,7 +251,9 @@ Task: plan_id، assignee_user_id nullable، status، due/scheduled window، بد
 | proposed_window_end | date | |
 | status | string | proposed…scheduled |
 | created_by | FK nullable | |
-| converted_appointment_id | FK nullable | فقط پس از اقدام مجاز |
+| patient_confirmed_at | timestamp nullable | تأیید بیمار |
+| authorized_by_user_id | FK users nullable | اقدام مجاز پذیرش |
+| converted_appointment_id | unsignedBigInteger nullable index | بدون FK؛ فقط پس از اقدام مجاز |
 
 ### 3.14 `invoices` / `invoice_items` / `payments`
 - Invoice به patient (+ اختیاری visit/appointment).
@@ -267,8 +299,8 @@ actor_user_id، action، subject_type/id، before/after json، ip، created_at.
 3. FKهای cascade محدود؛ ترجیح restrict روی مالی و نوبت.
 4. چک `ends_at > starts_at` در validation و در صورت امکان DB check.
 5. عدم ذخیره جلالی به‌عنوان ستون اصلی رویداد.
-
----
+6. `reservation_locks` یکتا روی `(resource_type, resource_id)` با نام `reservation_lock_resource_unique` و ستون `lock_version`. این ردیف قفل نوشتن است، نه خود تخصیص.
+7. ایندکس allocation با نام کوتاه `allocation_resource_window_idx` ساخته شده است. بافر فقط `ends_at` تخصیص را جلو می‌برد؛ `appointments.ends_at` پایان خود خدمت است.
 
 ## 7. ترتیب migration پیشنهادی (آینده، نه Day 1 کامل)
 
@@ -282,4 +314,4 @@ actor_user_id، action، subject_type/id، before/after json، ip، created_at.
 8. invoices/items/payments  
 9. activity_logs  
 
-Day 1: فقط foundation اسکلت Laravel (migrationهای پیش‌فرض users/cache/jobs). migration دامنه عمداً ایجاد نشد تا بدون تأیید مدل، schema زودرس ساخته نشود.
+Day 2 جدول‌های هویت، بیمار، کارکنان، یونیت، خدمت و تنظیمات را ساخت. Day 3 شیفت تا قفل رزرو را ساخت. Day 4 ویزیت، صف و رویداد عملیاتی را ساخت. طرح درمان، صورتحساب و audit کامل هنوز ساخته نشده‌اند.
