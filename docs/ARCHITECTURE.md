@@ -1,17 +1,18 @@
 # معماری DentalOS
 
 تاریخ: 2026-11-03  
-وضعیت: Day 5 Public Booking و تأیید پذیرش پیاده شده است. حساب بیمار، صورتحساب و طرح درمان شروع نشده‌اند.
+وضعیت: Day 6 Clinical Workflow پیاده شده است. صورتحساب و حساب بیمار هنوز شروع نشده‌اند.
 
 ## وضعیت پیاده‌سازی
 
 کد فعلی این مرزها را دارد:
 
 - `users.role` و middleware `role` برای default-deny مسیرهای مدیریت.
-- Policy برای Patient، User، Chair، TreatmentService، ClinicSetting، Appointment، WorkShift، Holiday، StaffSchedule، PatientVisit، WaitingQueueEntry و Gate روی `reception`.
-- Actionهای Scheduling + Reception + `app/Actions/Booking/` (`BookOnlineAppointment`، `ApproveOnlineAppointment`، `RejectOnlineAppointment`).
+- Policy برای Patient، User، Chair، TreatmentService، ClinicSetting، Appointment، WorkShift، Holiday، StaffSchedule، PatientVisit، WaitingQueueEntry، TreatmentPlan، TreatmentTask، FollowUp و Gate روی `reception`.
+- Actionهای Scheduling + Reception + Booking + `app/Actions/Clinical/` (Plan/Task/FollowUp).
 - رزرو عمومی مهمان روی همان `AvailabilityService` / `ReserveAppointment` با `AppointmentSource::Online`.
 - `JalaliCalendar` و `ClinicDay` برای مرز تاریخ/روز. ساعت‌ها با timezone برنامه (`UTC`) ذخیره می‌شوند.
+- Middleware `SecurityHeaders` با CSP سازگار با Blade/Vite.
 - دیتابیس اجرایی فعلی MariaDB `dental_os` است. تست‌ها SQLite `:memory:` هستند.
 
 کنترلرها نازک‌اند و اعتبارسنجی در Form Request است. Repository عمومی اضافه نشده است.
@@ -65,12 +66,13 @@ HTTP (routes/web.php, routes/auth)
 
 - `app/Actions/Scheduling/`
 - `app/Actions/Booking/`
+- `app/Actions/Clinical/`
 - `app/Actions/Billing/`
 - `app/Actions/Reception/`
 - `app/Enums/`
 - `app/Models/`
 - `app/Policies/`
-- `app/Support/` (JalaliCalendar، PhoneNormalizer، ClinicDay)
+- `app/Support/` (JalaliCalendar، PhoneNormalizer، ClinicDay، SpecialistPatientScope)
 
 از ایجاد Interface/Repository برای هر مدل خودداری شود مگر نقطه جایگزینی واقعی وجود داشته باشد.
 

@@ -28,7 +28,32 @@
                 <button type="submit" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">اتمام ویزیت</button>
             </form>
         @endif
+        @if ($canCreatePlan && $visit->patient)
+            <a href="{{ route('clinical.plans.create', ['patient' => $visit->patient_id, 'visit_id' => $visit->id]) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">ثبت برنامه درمانی</a>
+        @endif
+        @if ($canCreateFollowUp && $visit->patient)
+            <a href="{{ route('clinical.follow-ups.create', ['patient' => $visit->patient_id, 'visit_id' => $visit->id]) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">ثبت پیگیری</a>
+        @endif
     </div>
+
+    @if (($plans ?? collect())->isNotEmpty())
+        <section class="mb-4" aria-labelledby="visit-plans-heading">
+            <h2 id="visit-plans-heading" class="mb-2 text-base font-semibold">برنامه‌های اخیر بیمار</h2>
+            <ul class="space-y-2 text-sm">
+                @foreach ($plans as $plan)
+                    <li class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                        <a class="font-medium text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700" href="{{ route('clinical.plans.show', $plan) }}">برنامه #{{ $plan->id }} — {{ $plan->status->label() }}</a>
+                        <span class="text-slate-500"> · {{ $plan->tasks->count() }} وظیفه</span>
+                        @can('viewClinicalSummary', $plan)
+                            <p class="mt-1 text-slate-600">{{ \Illuminate\Support\Str::limit($plan->clinical_summary, 120) }}</p>
+                        @else
+                            <p class="mt-1 text-slate-600">{{ $plan->operational_summary ?: 'خلاصه عملیاتی ثبت نشده' }}</p>
+                        @endcan
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
 
     <section aria-labelledby="queue-history-heading">
         <h2 id="queue-history-heading" class="mb-2 text-base font-semibold">ورودی‌های صف</h2>

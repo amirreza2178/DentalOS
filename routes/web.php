@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ChairController;
 use App\Http\Controllers\ClinicSettingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\OnlineBookingRequestController;
 use App\Http\Controllers\PatientController;
@@ -12,7 +13,9 @@ use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\ReceptionDeskController;
 use App\Http\Controllers\StaffAccountController;
 use App\Http\Controllers\StaffScheduleController;
+use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\TreatmentServiceController;
+use App\Http\Controllers\TreatmentTaskController;
 use App\Http\Controllers\WorkShiftController;
 use Illuminate\Support\Facades\Route;
 
@@ -88,10 +91,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('/schedules/{staffSchedule}', [StaffScheduleController::class, 'destroy'])->whereNumber('staffSchedule')->name('schedules.destroy');
 });
 
+Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {
+    Route::get('/reception/search', [ReceptionDeskController::class, 'search'])->name('reception.search');
+});
+
 Route::middleware(['auth', 'role:admin,receptionist,specialist'])->group(function () {
     Route::get('/reception', [ReceptionDeskController::class, 'day'])->name('reception.day');
     Route::get('/reception/week', [ReceptionDeskController::class, 'week'])->name('reception.week');
-    Route::get('/reception/search', [ReceptionDeskController::class, 'search'])->name('reception.search');
     Route::get('/reception/visits/{visit}', [ReceptionDeskController::class, 'showVisit'])->whereNumber('visit')->name('reception.visits.show');
 
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
@@ -110,6 +116,57 @@ Route::middleware(['auth', 'role:admin,receptionist,specialist'])->group(functio
     Route::get('/staff/{directory}/{account}', [StaffAccountController::class, 'show'])
         ->whereIn('directory', ['specialists', 'clinical-staff', 'receptionists'])
         ->name('staff.show');
+
+    Route::get('/clinical/plans', [TreatmentPlanController::class, 'index'])->name('clinical.plans.index');
+    Route::get('/clinical/plans/{plan}', [TreatmentPlanController::class, 'show'])->whereNumber('plan')->name('clinical.plans.show');
+    Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('clinical.follow-ups.index');
+    Route::get('/follow-ups/{followUp}', [FollowUpController::class, 'show'])->whereNumber('followUp')->name('clinical.follow-ups.show');
+});
+
+Route::middleware(['auth', 'role:admin,specialist'])->group(function () {
+    Route::get('/patients/{patient}/clinical/plans/create', [TreatmentPlanController::class, 'create'])->whereNumber('patient')->name('clinical.plans.create');
+    Route::post('/patients/{patient}/clinical/plans', [TreatmentPlanController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('patient')
+        ->name('clinical.plans.store');
+    Route::put('/clinical/plans/{plan}', [TreatmentPlanController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('plan')
+        ->name('clinical.plans.update');
+    Route::post('/clinical/plans/{plan}/tasks', [TreatmentPlanController::class, 'storeTask'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('plan')
+        ->name('clinical.plans.tasks.store');
+
+    Route::get('/patients/{patient}/follow-ups/create', [FollowUpController::class, 'create'])->whereNumber('patient')->name('clinical.follow-ups.create');
+    Route::post('/patients/{patient}/follow-ups', [FollowUpController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('patient')
+        ->name('clinical.follow-ups.store');
+});
+
+Route::middleware(['auth', 'role:admin,receptionist,specialist,clinical_staff'])->group(function () {
+    Route::get('/clinical/tasks', [TreatmentTaskController::class, 'index'])->name('clinical.tasks.index');
+    Route::get('/clinical/tasks/{task}', [TreatmentTaskController::class, 'show'])->whereNumber('task')->name('clinical.tasks.show');
+    Route::post('/clinical/tasks/{task}/assign', [TreatmentTaskController::class, 'assign'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('task')
+        ->name('clinical.tasks.assign');
+    Route::post('/clinical/tasks/{task}/status', [TreatmentTaskController::class, 'updateStatus'])
+        ->middleware('throttle:40,1')
+        ->whereNumber('task')
+        ->name('clinical.tasks.status');
+});
+
+Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {
+    Route::post('/follow-ups/{followUp}/offer', [FollowUpController::class, 'markOffered'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('followUp')
+        ->name('clinical.follow-ups.offer');
+    Route::post('/follow-ups/{followUp}/decline', [FollowUpController::class, 'decline'])
+        ->middleware('throttle:30,1')
+        ->whereNumber('followUp')
+        ->name('clinical.follow-ups.decline');
 });
 
 Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\UserRole;
 use App\Models\PatientVisit;
 use App\Models\User;
+use App\Support\SpecialistPatientScope;
 
 class PatientVisitPolicy
 {
@@ -15,7 +16,15 @@ class PatientVisitPolicy
 
     public function view(User $user, PatientVisit $visit): bool
     {
-        return $this->viewAny($user);
+        if ($user->hasRole(UserRole::Admin, UserRole::Receptionist)) {
+            return true;
+        }
+
+        if ($user->hasRole(UserRole::Specialist)) {
+            return SpecialistPatientScope::canAccessVisit($user, $visit);
+        }
+
+        return false;
     }
 
     public function checkIn(User $user): bool
@@ -30,6 +39,14 @@ class PatientVisitPolicy
 
     public function complete(User $user, PatientVisit $visit): bool
     {
-        return $user->hasRole(UserRole::Admin, UserRole::Receptionist, UserRole::Specialist);
+        if ($user->hasRole(UserRole::Admin, UserRole::Receptionist)) {
+            return true;
+        }
+
+        if ($user->hasRole(UserRole::Specialist)) {
+            return SpecialistPatientScope::canAccessVisit($user, $visit);
+        }
+
+        return false;
     }
 }

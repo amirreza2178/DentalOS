@@ -31,6 +31,8 @@ class StoreAppointmentRequest extends FormRequest
             'clinical_staff_ids.*' => ['integer', 'distinct', 'exists:users,id'],
             'chair_id' => ['nullable', 'integer', 'exists:chairs,id'],
             'patient_notes' => ['nullable', 'string', 'max:2000'],
+            'follow_up_id' => ['nullable', 'integer', 'exists:follow_ups,id'],
+            'follow_up_authorization' => ['nullable', 'in:receptionist,patient'],
         ];
     }
 
@@ -56,6 +58,10 @@ class StoreAppointmentRequest extends FormRequest
             'chair_id' => filled($this->input('chair_id')) ? $this->input('chair_id') : null,
             'clinical_staff_ids' => $staffIds,
             'patient_notes' => filled($this->input('patient_notes')) ? $this->input('patient_notes') : null,
+            'follow_up_id' => filled($this->input('follow_up_id')) ? $this->input('follow_up_id') : null,
+            'follow_up_authorization' => filled($this->input('follow_up_authorization'))
+                ? $this->input('follow_up_authorization')
+                : null,
         ]);
     }
 

@@ -8,15 +8,18 @@ use App\Actions\Scheduling\ReservationData;
 use App\Actions\Scheduling\RescheduleAppointment;
 use App\Actions\Scheduling\ReserveAppointment;
 use App\Enums\AppointmentSource;
+use App\Enums\FollowUpAuthorization;
 use App\Enums\PatientStatus;
 use App\Enums\ResourceType;
 use App\Enums\UserRole;
+use App\Exceptions\Scheduling\FollowUpConfirmationRequiredException;
 use App\Exceptions\Scheduling\InvalidAppointmentTransitionException;
 use App\Exceptions\Scheduling\SlotUnavailableException;
 use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Chair;
+use App\Models\FollowUp;
 use App\Models\Patient;
 use App\Models\TreatmentService;
 use App\Models\User;
@@ -79,6 +82,8 @@ class AppointmentController extends Controller
             $appointment = $reserve->reserve($this->intent($request));
         } catch (SlotUnavailableException $exception) {
             return back()->withInput()->withErrors(['appointment_time' => $exception->reasons]);
+        } catch (FollowUpConfirmationRequiredException $exception) {
+            return back()->withInput()->withErrors(['follow_up_id' => $exception->getMessage()]);
         }
 
         return redirect()
@@ -180,6 +185,17 @@ class AppointmentController extends Controller
     {
         $term = trim($request->string('q')->toString());
         $patientId = $lockedPatientId ?? ($request->integer('patient_id') ?: null);
+        $followUpId = $request->integer('follow_up_id') ?: null;
+        $followUp = $followUpId === null ? null : FollowUp::query()->with('patient', 'treatmentService')->find($followUpId);
+
+        if ($followUp !== null) {
+            $this->authorize('schedule', $followUp);
+            $patientId = $followUp->patient_id;
+            if (! $request->filled('service_id') && $followUp->treatment_service_id) {
+                $request->merge(['service_id' => $followUp->treatment_service_id]);
+            }
+        }
+
         $serviceId = $request->integer('service_id') ?: null;
         $dateInput = trim($request->string('date')->toString());
         $timeInput = trim($request->string('time')->toString());
@@ -250,12 +266,21 @@ class AppointmentController extends Controller
             'people' => User::query()->whereIn('id', $peopleIds)->orderBy('name')->get()->keyBy('id'),
             'chairs' => Chair::query()->whereIn('id', $chairIds)->orderBy('sort_order')->get()->keyBy('id'),
             'calendar' => $calendar,
-            'lockedPatient' => $lockedPatientId !== null,
+            'lockedPatient' => $lockedPatientId !== null || $followUp !== null,
+            'followUp' => $followUp,
         ];
     }
 
     private function intent(StoreAppointmentRequest $request): ReservationData
     {
+        $followUpId = $request->validated('follow_up_id') !== null ? (int) $request->validated('follow_up_id') : null;
+        $authorization = null;
+
+        if ($followUpId !== null) {
+            $authorization = FollowUpAuthorization::tryFrom((string) ($request->validated('follow_up_authorization') ?? FollowUpAuthorization::Receptionist->value))
+                ?? FollowUpAuthorization::Receptionist;
+        }
+
         return new ReservationData(
             patientId: (int) $request->validated('patient_id'),
             treatmentServiceId: (int) $request->validated('treatment_service_id'),
@@ -269,6 +294,8 @@ class AppointmentController extends Controller
             source: AppointmentSource::Receptionist,
             actorUserId: $request->user()?->id,
             patientNotes: $request->validated('patient_notes'),
+            followUpId: $followUpId,
+            followUpAuthorization: $authorization,
         );
     }
 

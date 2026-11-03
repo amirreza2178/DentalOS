@@ -1,4 +1,7 @@
 <form method="GET" action="{{ $finderAction }}" class="mb-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2">
+    @if (! empty($followUp))
+        <input type="hidden" name="follow_up_id" value="{{ $followUp->id }}">
+    @endif
     @unless ($lockedPatient)
         <label class="block space-y-1 md:col-span-2" for="q">
             <span class="text-sm font-medium">جستجوی بیمار موجود</span>

@@ -4,6 +4,10 @@
     <input type="hidden" name="treatment_service_id" value="{{ $service->id }}">
     <input type="hidden" name="appointment_date" value="{{ $date }}">
     <input type="hidden" name="appointment_time" value="{{ $slot->startsAt->timezone(config('app.timezone'))->format('H:i') }}">
+    @if (! empty($followUp))
+        <input type="hidden" name="follow_up_id" value="{{ $followUp->id }}">
+        <input type="hidden" name="follow_up_authorization" value="receptionist">
+    @endif
     <p class="text-sm font-semibold text-slate-900">{{ $calendar->formatDate($slot->startsAt) }}، {{ $slot->startsAt->timezone(config('app.timezone'))->format('H:i') }} تا {{ $slot->endsAt->timezone(config('app.timezone'))->format('H:i') }}</p>
     <p class="text-xs leading-5 text-slate-500">مدت از خدمت خوانده می‌شود: {{ $service->default_duration_minutes }} دقیقه.@if ($service->buffer_minutes > 0) منبع تا {{ $service->buffer_minutes }} دقیقه بعد از پایان نوبت آزاد نمی‌شود.@endif</p>
     <div class="grid gap-3 md:grid-cols-2">

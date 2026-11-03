@@ -57,6 +57,16 @@ class Patient extends Model
         return $this->hasMany(PatientVisit::class);
     }
 
+    public function treatmentPlans(): HasMany
+    {
+        return $this->hasMany(TreatmentPlan::class);
+    }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
+    }
+
     public function fullName(): string
     {
         return trim($this->first_name.' '.$this->last_name);

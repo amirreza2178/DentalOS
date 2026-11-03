@@ -6,6 +6,12 @@
         @can('viewClinicalNotes', $patient)
             <a href="{{ route('patients.clinical-notes', $patient) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">یادداشت بالینی</a>
         @endcan
+        @can('create', App\Models\TreatmentPlan::class)
+            <a href="{{ route('clinical.plans.create', $patient) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">برنامه درمانی</a>
+        @endcan
+        @can('create', App\Models\FollowUp::class)
+            <a href="{{ route('clinical.follow-ups.create', $patient) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">ثبت پیگیری</a>
+        @endcan
     </x-page-header>
 
     @if ($duplicates->isNotEmpty())

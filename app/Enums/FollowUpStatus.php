@@ -12,6 +12,19 @@ enum FollowUpStatus: string
     case Expired = 'expired';
     case Cancelled = 'cancelled';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::Proposed => 'پیشنهادی',
+            self::OfferedToPatient => 'پیشنهاد به بیمار',
+            self::Accepted => 'پذیرفته‌شده',
+            self::Scheduled => 'زمان‌بندی‌شده',
+            self::Declined => 'رد‌شده',
+            self::Expired => 'منقضی',
+            self::Cancelled => 'لغو‌شده',
+        };
+    }
+
     public function canBeScheduled(): bool
     {
         return in_array($this, [

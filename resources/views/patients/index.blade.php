@@ -1,5 +1,5 @@
 <x-management-layout title="بیماران">
-    <x-page-header title="بیماران" description="جستجو با نام، موبایل یا شناسه پرونده. شماره مشترک خانواده پرونده‌ها را ادغام نمی‌کند.">
+    <x-page-header title="بیماران" description="{{ ! empty($specialistScoped) ? 'فقط بیمارانی که نوبت تخصیص‌یافته به شما دارند.' : 'جستجو با نام، موبایل یا شناسه پرونده. شماره مشترک خانواده پرونده‌ها را ادغام نمی‌کند.' }}">
         @can('create', App\Models\Patient::class)
             <a href="{{ route('patients.create') }}" class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">بیمار جدید</a>
         @endcan

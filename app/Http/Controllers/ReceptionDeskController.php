@@ -151,7 +151,7 @@ class ReceptionDeskController extends Controller
 
     public function search(Request $request, JalaliCalendar $calendar, ClinicDay $clinicDay): View
     {
-        $this->authorize('view', 'reception');
+        $this->authorize('operate', 'reception');
 
         $term = trim($request->string('q')->toString());
         [$gregorian, $dateInput] = $this->resolveDate($request, $calendar, $clinicDay);
@@ -202,12 +202,19 @@ class ReceptionDeskController extends Controller
             'queueEntries',
         ]);
 
+        $user = request()->user();
+
         return view('reception.visit', [
             'visit' => $visit,
             'calendar' => $calendar,
             'clinicDay' => $clinicDay,
-            'canOperate' => request()->user()->can('operate', 'reception'),
-            'canComplete' => request()->user()->can('complete', $visit),
+            'canOperate' => $user->can('operate', 'reception'),
+            'canComplete' => $user->can('complete', $visit),
+            'canCreatePlan' => $user->can('create', \App\Models\TreatmentPlan::class),
+            'canCreateFollowUp' => $user->can('create', \App\Models\FollowUp::class),
+            'plans' => $visit->patient
+                ? $visit->patient->treatmentPlans()->with('tasks')->orderByDesc('id')->limit(5)->get()
+                : collect(),
         ]);
     }
 

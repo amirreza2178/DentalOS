@@ -7,6 +7,7 @@ use App\Actions\Patients\SavePatient;
 use App\Http\Requests\PatientFormRequest;
 use App\Models\Patient;
 use App\Support\JalaliCalendar;
+use App\Support\SpecialistPatientScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -23,6 +24,7 @@ class PatientController extends Controller
         $patients = Patient::query()
             ->when($archived, fn ($query) => $query->onlyTrashed())
             ->when($term !== '', fn ($query) => $query->matchingSearch($term))
+            ->tap(fn ($query) => SpecialistPatientScope::constrainPatients($query, $request->user()))
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->paginate(15)
@@ -32,6 +34,7 @@ class PatientController extends Controller
             'patients' => $patients,
             'term' => $term,
             'archived' => $archived,
+            'specialistScoped' => SpecialistPatientScope::isSpecialistOnly($request->user()),
         ]);
     }
 

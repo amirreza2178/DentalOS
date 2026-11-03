@@ -243,3 +243,27 @@
 - **وضعیت:** confirmed
 - **تصمیم:** `slots`/`opening`/`reasons` زمان `<= now(app.timezone)` را رد می‌کنند.
 - **دلیل:** جلوگیری از رزرو زمان سپری‌شده در مسیر عمومی و داخلی.
+
+## D-041 — برنامه درمانی و وظیفه جدا از نوبت/ویزیت
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** `treatment_plans` و `treatment_tasks` موجودیت مستقل‌اند. تشخیص/پیشنهاد خودکار ساخته نمی‌شود. فقط متخصص/مدیر ثبت یا ویرایش clinical_summary می‌کند. پذیرش فقط operational_summary را می‌بیند.
+- **دلیل:** BR-02 و حداقل گردش بالینی بدون EMR کامل.
+
+## D-042 — تخصیص وظیفه فقط با صلاحیت منطبق
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** `required_qualification` باید دقیقاً با `staff_profiles.qualification` مسئول برابر باشد. تعداد نیرو hardcode نیست. نیروی فاقد صلاحیت رد می‌شود. ترمینال‌ها بدون مجوز دوباره فعال نمی‌شوند.
+- **دلیل:** دانشجویان و دارندگان مدرک را مجوزدار فرض نکنیم.
+
+## D-043 — محدوده بیمار متخصص و حذف جستجوی عمومی پذیرش برای متخصص
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** متخصص فقط بیمارانی را می‌بیند که در نوبتشان به‌عنوان specialist تخصیص دارد. `/reception/search` فقط admin/receptionist. ویزیت هم با همین مالکیت محدود شد.
+- **دلیل:** رفع Medium Day 5 و least privilege.
+
+## D-044 — Security Headers و CSP سازگار با Vite
+- **تاریخ:** 2026-11-03
+- **وضعیت:** confirmed
+- **تصمیم:** Middleware سراسری `SecurityHeaders` با nosniff، SAMEORIGIN، Referrer-Policy، Permissions-Policy و CSP (`script-src 'self'`؛ در local برای HMR `unsafe-eval` و ws). Inline style برای Tailwind utility مجاز است.
+- **دلیل:** سخت‌سازی بدون شکستن Blade/Vite.

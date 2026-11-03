@@ -1,7 +1,7 @@
 # طراحی پایگاه‌داده DentalOS
 
 تاریخ: 2026-11-03  
-وضعیت: ۱۵ migration روی MariaDB `dental_os` Ran هستند. تست‌ها همچنان SQLite `:memory:` هستند.
+وضعیت: ۱۶ migration روی MariaDB `dental_os` Ran هستند (۲۷ جدول). تست‌ها همچنان SQLite `:memory:` هستند.
 
 ## جدول‌های موجود
 
@@ -14,6 +14,7 @@
 - `work_shifts`، `shift_breaks`، `staff_schedules`، `holidays`
 - `follow_ups`، `appointments` (به‌علاوه `public_reference`، `decision_reason`، `decided_at`)، `appointment_resource_allocations`، `reservation_locks`
 - `patient_visits`، `waiting_queue_entries`، `operational_events`
+- `treatment_plans`، `treatment_tasks` (Day 6)
 
 `follow_ups.converted_appointment_id` ایندکس است و کلید خارجی به `appointments` ندارد تا وابستگی دایره‌ای ساخته نشود.
 
@@ -237,19 +238,23 @@ Integrity: برای appointmentهای با وضعیت فعال، overlap روی 
 ### 3.11b `operational_events`
 رویدادهای حداقلی پذیرش: نوع رویداد، actor، subject morph، from/to status. بدون کپی داده بالینی حساس.
 
-### 3.12 `treatment_plans` / `treatment_tasks`
-Plan متعلق به patient (+ اختیاری created_by specialist).  
-Task: plan_id، assignee_user_id nullable، status، due/scheduled window، بدون تجویز خودکار.
+### 3.12 `treatment_plans` / `treatment_tasks` (Day 6 پیاده شد)
+`treatment_plans`: patient_id، patient_visit_id nullable، created_by_user_id، status (`proposed|active|completed|cancelled`)، clinical_summary، operational_summary nullable.  
+`treatment_tasks`: treatment_plan_id، title، instructions nullable، required_qualification، assignee_user_id nullable، assigned_by_user_id nullable، status (`pending|assigned|in_progress|completed|cancelled`)، completion_note/completed_at/cancelled_at.  
+بدون تجویز خودکار؛ تخصیص فقط با تطبیق صلاحیت ثبت‌شده.
 
 ### 3.13 `follow_ups`
 | ستون | نوع | توضیح |
 |------|-----|-------|
 | id | PK | |
 | patient_id | FK | |
+| patient_visit_id | FK nullable | Day 6 |
 | treatment_service_id | FK nullable | |
 | proposed_window_start | date | |
 | proposed_window_end | date | |
 | status | string | proposed…scheduled |
+| operational_note | text nullable | Day 6؛ برای پذیرش |
+| outcome_note | text nullable | Day 6؛ نتیجه اقدام |
 | created_by | FK nullable | |
 | patient_confirmed_at | timestamp nullable | تأیید بیمار |
 | authorized_by_user_id | FK users nullable | اقدام مجاز پذیرش |

@@ -2,8 +2,13 @@
 
 namespace Tests\Feature\Patients;
 
+use App\Enums\ResourceType;
 use App\Enums\UserRole;
+use App\Models\Appointment;
+use App\Models\AppointmentResourceAllocation;
 use App\Models\Patient;
+use App\Models\TreatmentService;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -74,7 +79,7 @@ class PatientManagementTest extends TestCase
         $this->assertNotSoftDeleted($patient);
     }
 
-    public function test_specialist_can_view_but_not_create_patients(): void
+    public function test_specialist_can_view_allocated_patients_but_not_create(): void
     {
         $this->signIn(UserRole::Receptionist);
         $this->post(route('patients.store'), [
@@ -83,9 +88,43 @@ class PatientManagementTest extends TestCase
             'status' => 'active',
         ]);
         $patient = Patient::query()->firstOrFail();
+        $unrelated = Patient::query()->create([
+            'code' => 'P-900099',
+            'first_name' => 'بی‌ربط',
+            'last_name' => 'جعفری',
+            'status' => 'active',
+        ]);
 
-        $this->signIn(UserRole::Specialist);
+        $specialist = User::factory()->create(['role' => UserRole::Specialist, 'is_active' => true]);
+        $service = TreatmentService::query()->create([
+            'code' => 'VIEW',
+            'name' => 'خدمت مشاهده',
+            'default_duration_minutes' => 30,
+            'buffer_minutes' => 0,
+            'requires_specialist' => true,
+            'required_clinical_staff_count' => 0,
+            'is_active' => true,
+        ]);
+        $appointment = Appointment::query()->create([
+            'patient_id' => $patient->id,
+            'treatment_service_id' => $service->id,
+            'starts_at' => '2026-11-07 08:00:00',
+            'ends_at' => '2026-11-07 08:30:00',
+            'status' => 'confirmed',
+            'source' => 'receptionist',
+        ]);
+        AppointmentResourceAllocation::query()->create([
+            'appointment_id' => $appointment->id,
+            'resource_type' => ResourceType::Specialist->value,
+            'resource_id' => $specialist->id,
+            'starts_at' => '2026-11-07 08:00:00',
+            'ends_at' => '2026-11-07 08:30:00',
+            'is_required' => true,
+        ]);
+
+        $this->actingAs($specialist);
         $this->get(route('patients.show', $patient))->assertOk();
+        $this->get(route('patients.show', $unrelated))->assertForbidden();
         $this->get(route('patients.create'))->assertForbidden();
     }
 }
