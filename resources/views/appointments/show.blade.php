@@ -63,12 +63,5 @@
         @endif
     </section>
 
-    @can('cancel', $appointment)
-        @if ($appointment->status->canTransitionTo(App\Enums\AppointmentStatus::Cancelled))
-            <form method="POST" action="{{ route('appointments.cancel', $appointment) }}" class="mt-4" onsubmit="return confirm('این نوبت لغو شود؟')">
-                @csrf
-                <button type="submit" class="rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-800 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-700">لغو نوبت</button>
-            </form>
-        @endif
-    @endcan
+    @include('partials.cancel-appointment-form', ['appointment' => $appointment])
 </x-management-layout>

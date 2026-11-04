@@ -8,6 +8,7 @@ use App\Actions\Scheduling\ReservationData;
 use App\Actions\Scheduling\RescheduleAppointment;
 use App\Actions\Scheduling\ReserveAppointment;
 use App\Enums\AppointmentSource;
+use App\Enums\CancellationReason;
 use App\Enums\FollowUpAuthorization;
 use App\Enums\PatientStatus;
 use App\Enums\ResourceType;
@@ -15,6 +16,7 @@ use App\Enums\UserRole;
 use App\Exceptions\Scheduling\FollowUpConfirmationRequiredException;
 use App\Exceptions\Scheduling\InvalidAppointmentTransitionException;
 use App\Exceptions\Scheduling\SlotUnavailableException;
+use App\Http\Requests\CancelAppointmentRequest;
 use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Models\Appointment;
@@ -126,18 +128,24 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function cancel(Appointment $appointment, CancelAppointment $cancel): RedirectResponse
-    {
-        $this->authorize('cancel', $appointment);
-
+    public function cancel(
+        CancelAppointmentRequest $request,
+        Appointment $appointment,
+        CancelAppointment $cancel,
+    ): RedirectResponse {
         try {
-            $cancel->cancel($appointment, request()->user());
+            $cancel->cancel(
+                $appointment,
+                $request->user(),
+                CancellationReason::from($request->validated('cancellation_reason')),
+                $request->validated('cancellation_note'),
+            );
         } catch (InvalidAppointmentTransitionException $exception) {
             return back()->withErrors(['status' => $exception->getMessage()]);
         }
 
-        if (request()->string('return_to')->toString() === 'reception.day') {
-            $date = trim(request()->string('return_date')->toString());
+        if ($request->string('return_to')->toString() === 'reception.day') {
+            $date = trim($request->string('return_date')->toString());
 
             return redirect()
                 ->route('reception.day', array_filter(['date' => $date !== '' ? $date : null]))

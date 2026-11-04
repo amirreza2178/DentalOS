@@ -62,8 +62,8 @@ class ReceptionCommandCenterTest extends TestCase
         FollowUp::query()->create([
             'patient_id' => $clinic['patient']->id,
             'treatment_service_id' => $clinic['service']->id,
-            'proposed_window_start' => '2026-11-10',
-            'proposed_window_end' => '2026-11-20',
+            'proposed_window_start' => '2026-11-01',
+            'proposed_window_end' => '2026-11-10',
             'status' => FollowUpStatus::Proposed->value,
             'created_by' => $clinic['specialist']->id,
         ]);
@@ -188,39 +188,54 @@ class ReceptionCommandCenterTest extends TestCase
             ->assertSee('همین روز', false);
     }
 
-    public function test_command_center_dedupes_noisy_follow_up_rows_for_same_patient_action(): void
+    public function test_command_center_keeps_independent_follow_ups_and_focuses_day_plus_overdue(): void
     {
         $clinic = $this->makeClinic();
         $this->signIn(UserRole::Receptionist);
         $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
 
-        FollowUp::query()->create([
+        $overdue = FollowUp::query()->create([
             'patient_id' => $clinic['patient']->id,
             'treatment_service_id' => $clinic['service']->id,
-            'proposed_window_start' => '2026-11-10',
-            'proposed_window_end' => '2026-11-20',
+            'proposed_window_start' => '2026-10-01',
+            'proposed_window_end' => '2026-10-15',
             'status' => FollowUpStatus::Proposed->value,
             'created_by' => $clinic['specialist']->id,
         ]);
-        FollowUp::query()->create([
+        $futureIndependent = FollowUp::query()->create([
             'patient_id' => $clinic['patient']->id,
             'treatment_service_id' => $clinic['service']->id,
-            'proposed_window_start' => '2026-11-12',
-            'proposed_window_end' => '2026-11-22',
+            'proposed_window_start' => '2026-11-20',
+            'proposed_window_end' => '2026-11-30',
             'status' => FollowUpStatus::Proposed->value,
+            'created_by' => $clinic['specialist']->id,
+        ]);
+        $sameDayWindow = FollowUp::query()->create([
+            'patient_id' => $clinic['otherPatient']->id,
+            'treatment_service_id' => $clinic['service']->id,
+            'proposed_window_start' => '2026-11-01',
+            'proposed_window_end' => '2026-11-10',
+            'status' => FollowUpStatus::OfferedToPatient->value,
             'created_by' => $clinic['specialist']->id,
         ]);
 
-        $html = $this->get(route('reception.day', ['date' => $date]))
+        $focused = $this->get(route('reception.day', ['date' => $date]))
             ->assertOk()
-            ->assertSee($clinic['patient']->fullName(), false)
+            ->assertSee('سررسید گذشته', false)
+            ->assertSee('همه پیگیری‌ها', false)
             ->getContent();
 
-        $this->assertSame(
-            1,
-            substr_count($html, 'href="'.route('clinical.follow-ups.show', FollowUp::query()->oldest('id')->first()).'"'),
-            'duplicate follow-up rows for the same patient/service/status should collapse to one card',
-        );
+        $this->assertStringContainsString(route('clinical.follow-ups.show', $overdue, absolute: false), $focused);
+        $this->assertStringContainsString(route('clinical.follow-ups.show', $sameDayWindow, absolute: false), $focused);
+        $this->assertStringNotContainsString(route('clinical.follow-ups.show', $futureIndependent, absolute: false), $focused);
+
+        $all = $this->get(route('reception.day', ['date' => $date, 'followups' => 'all']))
+            ->assertOk()
+            ->assertSee('تمرکز امروز', false)
+            ->getContent();
+
+        $this->assertStringContainsString(route('clinical.follow-ups.show', $futureIndependent, absolute: false), $all);
+        $this->assertStringContainsString(route('clinical.follow-ups.show', $overdue, absolute: false), $all);
     }
 
     public function test_receptionist_can_cancel_from_day_schedule_and_return_to_command_center(): void
@@ -232,15 +247,50 @@ class ReceptionCommandCenterTest extends TestCase
 
         $this->get(route('reception.day', ['date' => $date]))
             ->assertOk()
-            ->assertSee('لغو', false)
+            ->assertSee('دلیل لغو', false)
             ->assertSee(route('appointments.cancel', $appointment, absolute: false), false);
 
         $this->post(route('appointments.cancel', $appointment), [
+            'cancellation_reason' => \App\Enums\CancellationReason::PatientRequest->value,
+            'cancellation_note' => 'تماس تلفنی',
             'return_to' => 'reception.day',
             'return_date' => $date,
         ])->assertRedirect(route('reception.day', ['date' => $date]).'#day-appointments-heading');
 
-        $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
+        $fresh = $appointment->fresh();
+        $this->assertSame(AppointmentStatus::Cancelled, $fresh->status);
+        $this->assertSame('cancel:patient_request|تماس تلفنی', $fresh->decision_reason);
+        $this->assertNotNull($fresh->decided_at);
+        $this->assertDatabaseHas('operational_events', [
+            'event_type' => 'appointment_cancelled',
+            'subject_id' => $appointment->id,
+        ]);
+    }
+
+    public function test_repeated_cancellation_is_idempotent_and_keeps_first_reason(): void
+    {
+        $clinic = $this->makeClinic();
+        $user = $this->signIn(UserRole::Receptionist);
+        $appointment = $this->reserveAt($clinic, '08:00');
+
+        app(\App\Actions\Scheduling\CancelAppointment::class)->cancel(
+            $appointment,
+            $user,
+            \App\Enums\CancellationReason::ClinicUnavailable,
+            'اول',
+        );
+
+        app(\App\Actions\Scheduling\CancelAppointment::class)->cancel(
+            $appointment->fresh(),
+            $user,
+            \App\Enums\CancellationReason::Other,
+            'دوم نباید جایگزین شود',
+        );
+
+        $fresh = $appointment->fresh();
+        $this->assertSame(AppointmentStatus::Cancelled, $fresh->status);
+        $this->assertSame('cancel:clinic_unavailable|اول', $fresh->decision_reason);
+        $this->assertSame(1, \App\Models\OperationalEvent::query()->where('subject_id', $appointment->id)->where('event_type', 'appointment_cancelled')->count());
     }
 
     public function test_receptionist_primary_nav_keeps_daily_path_and_moves_catalog_to_management(): void

@@ -236,7 +236,7 @@ class SchedulingEngineTest extends TestCase
     {
         $clinic = $this->makeClinic();
         $appointment = $this->reserveAt($clinic, '08:00');
-        app(CancelAppointment::class)->cancel($appointment);
+        app(CancelAppointment::class)->cancel($appointment, reason: \App\Enums\CancellationReason::BookedInError);
 
         $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
         $this->assertSame(3, $appointment->allocations()->count());
@@ -494,7 +494,9 @@ class SchedulingEngineTest extends TestCase
             'chair_id' => $clinic['chair']->id,
         ])->assertSessionHasErrors('appointment_time');
 
-        $this->post(route('appointments.cancel', $appointment))->assertRedirect();
+        $this->post(route('appointments.cancel', $appointment), [
+            'cancellation_reason' => \App\Enums\CancellationReason::ScheduleConflict->value,
+        ])->assertRedirect();
         $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
         $this->get(route('appointments.show', $appointment))->assertSee('منابعش برای رزرو بعدی آزاد شد');
 

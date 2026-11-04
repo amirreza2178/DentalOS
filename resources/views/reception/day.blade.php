@@ -224,16 +224,14 @@
                                             <a href="{{ route('appointments.reschedule', $appointment) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">جابه‌جایی</a>
                                         @endif
                                     @endcan
-                                    @can('cancel', $appointment)
-                                        @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Cancelled))
-                                            <form method="POST" action="{{ route('appointments.cancel', $appointment) }}" onsubmit="return confirm('این نوبت لغو شود؟')">
-                                                @csrf
-                                                <input type="hidden" name="return_to" value="reception.day">
-                                                <input type="hidden" name="return_date" value="{{ $date }}">
-                                                <button type="submit" class="inline-flex min-h-10 items-center rounded-lg border border-rose-300 px-3 text-xs font-medium text-rose-800 hover:bg-rose-50">لغو</button>
-                                            </form>
-                                        @endif
-                                    @endcan
+                                    <div class="w-full basis-full">
+                                        @include('partials.cancel-appointment-form', [
+                                            'appointment' => $appointment,
+                                            'returnTo' => 'reception.day',
+                                            'returnDate' => $date,
+                                            'compact' => true,
+                                        ])
+                                    </div>
                                     @if ($visit)
                                         <a href="{{ route('reception.visits.show', $visit) }}" class="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">ویزیت</a>
                                     @endif
@@ -315,16 +313,12 @@
                                                         <a href="{{ route('appointments.reschedule', $appointment) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">جابه‌جایی</a>
                                                     @endif
                                                 @endcan
-                                                @can('cancel', $appointment)
-                                                    @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Cancelled))
-                                                        <form method="POST" action="{{ route('appointments.cancel', $appointment) }}" onsubmit="return confirm('این نوبت لغو شود؟')">
-                                                            @csrf
-                                                            <input type="hidden" name="return_to" value="reception.day">
-                                                            <input type="hidden" name="return_date" value="{{ $date }}">
-                                                            <button type="submit" class="w-full rounded-lg border border-rose-300 px-3 py-2 text-xs font-medium text-rose-800 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-700">لغو</button>
-                                                        </form>
-                                                    @endif
-                                                @endcan
+                                                @include('partials.cancel-appointment-form', [
+                                                    'appointment' => $appointment,
+                                                    'returnTo' => 'reception.day',
+                                                    'returnDate' => $date,
+                                                    'compact' => true,
+                                                ])
                                             </div>
                                         </td>
                                     </tr>
@@ -483,18 +477,46 @@
                 </section>
 
                 <section aria-labelledby="followups-heading">
-                    <div class="mb-3 flex items-center justify-between gap-2">
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <h2 id="followups-heading" class="text-base font-semibold text-[color:var(--dos-navy)]">پیگیری‌های نیازمند اقدام</h2>
-                        <a href="{{ route('clinical.follow-ups.index', ['actionable' => 1]) }}" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه</a>
+                        <div class="flex flex-wrap items-center gap-3">
+                            @if (($followUpScope ?? 'focus') === 'focus')
+                                <a href="{{ route('reception.day', array_filter(['date' => $date, 'online' => ($onlineScope ?? 'day') === 'all' ? 'all' : null, 'followups' => 'all'])) }}#followups-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه پیگیری‌ها@if (($followUpAllCount ?? 0) > $actionableFollowUps->count()) ({{ $followUpAllCount }})@endif</a>
+                            @else
+                                <a href="{{ route('reception.day', array_filter(['date' => $date, 'online' => ($onlineScope ?? 'day') === 'all' ? 'all' : null])) }}#followups-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">تمرکز امروز</a>
+                            @endif
+                            <a href="{{ route('clinical.follow-ups.index', ['actionable' => 1]) }}" class="text-xs font-semibold text-slate-600 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست کامل</a>
+                        </div>
                     </div>
+                    <p class="mb-2 text-xs text-slate-500">
+                        @if (($followUpScope ?? 'focus') === 'focus')
+                            نمایش: هم‌پوشانی با روز انتخاب‌شده + پیگیری‌های سررسیدگذشته (overdue). اقدام‌های مستقل ادغام نمی‌شوند.
+                        @else
+                            نمایش همه پیگیری‌های قابل اقدام، صرف‌نظر از پنجره پیشنهادی.
+                        @endif
+                    </p>
                     @if ($actionableFollowUps->isEmpty())
-                        <p class="rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-600">پیگیری قابل اقدامی نیست.</p>
+                        <p class="rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-600">
+                            @if (($followUpScope ?? 'focus') === 'focus' && ($followUpAllCount ?? 0) > 0)
+                                برای تمرکز امروز پیگیری هم‌پوشان/سررسیدگذشته نیست؛ {{ $followUpAllCount }} مورد در فهرست کامل هست.
+                            @else
+                                پیگیری قابل اقدامی نیست.
+                            @endif
+                        </p>
                     @else
                         <ul class="space-y-2">
                             @foreach ($actionableFollowUps as $followUp)
-                                <li class="rounded-xl border border-slate-200 bg-white p-4">
+                                @php
+                                    $overdue = $followUp->proposed_window_end && $followUp->proposed_window_end->toDateString() < $gregorian;
+                                @endphp
+                                <li class="rounded-xl border border-slate-200 bg-white p-4 {{ $overdue ? 'border-amber-300' : '' }}">
                                     <p class="font-semibold">{{ $followUp->patient?->fullName() }}</p>
-                                    <p class="mt-1 text-xs text-slate-500">{{ $followUp->treatmentService?->name }} · {{ $followUp->status->label() }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ $followUp->treatmentService?->name }} · {{ $followUp->status->label() }}
+                                        @if ($overdue)
+                                            · <span class="font-semibold text-amber-900">سررسید گذشته</span>
+                                        @endif
+                                    </p>
                                     <a href="{{ route('clinical.follow-ups.show', $followUp) }}" class="mt-3 inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-xs font-medium">باز کردن</a>
                                 </li>
                             @endforeach

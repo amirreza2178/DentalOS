@@ -19,11 +19,18 @@ final class ReceptionCommandCenter
 {
     /**
      * @param  'day'|'all'  $onlineScope
+     * @param  'focus'|'all'  $followUpScope
      * @return array<string, mixed>
      */
-    public function build(User $user, string $gregorian, ClinicDay $clinicDay, string $onlineScope = 'day'): array
-    {
+    public function build(
+        User $user,
+        string $gregorian,
+        ClinicDay $clinicDay,
+        string $onlineScope = 'day',
+        string $followUpScope = 'focus',
+    ): array {
         $onlineScope = $onlineScope === 'all' ? 'all' : 'day';
+        $followUpScope = $followUpScope === 'all' ? 'all' : 'focus';
         $dayStart = $clinicDay->startOfDay($gregorian);
         $dayEnd = $clinicDay->endExclusive($gregorian);
         $specialistOnly = $user->hasRole(UserRole::Specialist)
@@ -100,6 +107,7 @@ final class ReceptionCommandCenter
         $pendingOnline = collect();
         $pendingOnlineAllCount = 0;
         $actionableFollowUps = collect();
+        $followUpAllCount = 0;
         $alerts = collect();
 
         if ($canOperate) {
@@ -122,6 +130,18 @@ final class ReceptionCommandCenter
                 ->limit(8)
                 ->get();
 
+            $followUpAllCount = FollowUp::query()
+                ->whereIn('status', [
+                    FollowUpStatus::Proposed->value,
+                    FollowUpStatus::OfferedToPatient->value,
+                    FollowUpStatus::Accepted->value,
+                ])
+                ->count();
+
+            /*
+             | Focus scope keeps overdue + windows overlapping the selected ClinicDay.
+             | Independent follow-ups for the same patient/service stay separate.
+             */
             $actionableFollowUps = FollowUp::query()
                 ->with(['patient:id,first_name,last_name,code', 'treatmentService:id,name'])
                 ->whereIn('status', [
@@ -129,16 +149,23 @@ final class ReceptionCommandCenter
                     FollowUpStatus::OfferedToPatient->value,
                     FollowUpStatus::Accepted->value,
                 ])
+                ->when(
+                    $followUpScope === 'focus',
+                    fn ($query) => $query->where(function ($scoped) use ($gregorian): void {
+                        $scoped
+                            ->where(function ($overlap) use ($gregorian): void {
+                                $overlap
+                                    ->whereDate('proposed_window_start', '<=', $gregorian)
+                                    ->whereDate('proposed_window_end', '>=', $gregorian);
+                            })
+                            ->orWhereDate('proposed_window_end', '<', $gregorian);
+                    }),
+                )
+                ->orderBy('proposed_window_end')
                 ->orderBy('proposed_window_start')
-                ->orderByDesc('id')
-                ->limit(24)
+                ->orderBy('id')
+                ->limit(8)
                 ->get()
-                ->unique(fn (FollowUp $followUp): string => implode('|', [
-                    (string) $followUp->patient_id,
-                    (string) $followUp->treatment_service_id,
-                    $followUp->status->value,
-                ]))
-                ->take(8)
                 ->values();
 
             if ($pendingOnline->isNotEmpty()) {
@@ -160,6 +187,12 @@ final class ReceptionCommandCenter
                 $alerts->push([
                     'tone' => 'neutral',
                     'label' => $actionableFollowUps->count().' پیگیری نیازمند اقدام پذیرش',
+                    'href' => '#followups-heading',
+                ]);
+            } elseif ($followUpScope === 'focus' && $followUpAllCount > 0) {
+                $alerts->push([
+                    'tone' => 'neutral',
+                    'label' => $followUpAllCount.' پیگیری قابل اقدام خارج از تمرکز امروز',
                     'href' => '#followups-heading',
                 ]);
             }
@@ -203,6 +236,8 @@ final class ReceptionCommandCenter
             'canOperate' => $canOperate,
             'onlineScope' => $onlineScope,
             'pendingOnlineAllCount' => $pendingOnlineAllCount,
+            'followUpScope' => $followUpScope,
+            'followUpAllCount' => $followUpAllCount,
             'schedule' => $schedule,
             'cancelledOrRescheduled' => $cancelledOrRescheduled,
             'upcoming' => $upcoming,

@@ -40,7 +40,8 @@ class ReceptionDeskController extends Controller
 
         [$gregorian, $dateInput, $dateError] = $this->resolveDate($request, $calendar, $clinicDay);
         $onlineScope = $request->string('online')->toString() === 'all' ? 'all' : 'day';
-        $board = $commandCenter->build($request->user(), $gregorian, $clinicDay, $onlineScope);
+        $followUpScope = $request->string('followups')->toString() === 'all' ? 'all' : 'focus';
+        $board = $commandCenter->build($request->user(), $gregorian, $clinicDay, $onlineScope, $followUpScope);
 
         return view('reception.day', array_merge($board, [
             'date' => $dateInput,
