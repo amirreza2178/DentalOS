@@ -5,11 +5,8 @@
         @endcan
     </x-page-header>
 
-    <form method="GET" class="mb-4 flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <label class="block space-y-1" for="date">
-            <span class="text-sm font-medium">تاریخ جلالی</span>
-            <input id="date" name="date" value="{{ $date }}" placeholder="۱۴۰۴/۰۱/۰۱" inputmode="numeric" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
-        </label>
+    <form method="GET" class="mb-4 max-w-md space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+        <x-jalali-date-field name="date" label="تاریخ جلالی" :value="$date" :auto-submit="true" hint="فهرست نوبت‌های همان روز کلینیک." />
         <button type="submit" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">اعمال</button>
     </form>
     @if ($dateError)

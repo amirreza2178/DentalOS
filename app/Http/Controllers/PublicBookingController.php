@@ -38,7 +38,7 @@ class PublicBookingController extends Controller
         ]);
     }
 
-    public function service(TreatmentService $service, JalaliCalendar $calendar): View|RedirectResponse
+    public function service(TreatmentService $service, AvailabilityService $availability, JalaliCalendar $calendar): View|RedirectResponse
     {
         if (! $service->is_active || ! $service->is_bookable_online) {
             return redirect()
@@ -48,12 +48,18 @@ class PublicBookingController extends Controller
 
         $timezone = config('app.timezone');
         $today = now($timezone)->startOfDay();
+        $horizonEnd = $today->copy()->addDays(62);
 
         return view('booking.date', [
             'service' => $service,
             'calendar' => $calendar,
             'step' => 2,
             'todayJalali' => $calendar->formatDate($today),
+            'dayStatuses' => $availability->dayStatusesBetween(
+                $service,
+                $today->toDateString(),
+                $horizonEnd->toDateString(),
+            ),
             'quickDates' => [
                 ['label' => 'امروز', 'value' => $calendar->formatDate($today)],
                 ['label' => 'فردا', 'value' => $calendar->formatDate($today->copy()->addDay())],
@@ -83,6 +89,7 @@ class PublicBookingController extends Controller
 
         $timezone = config('app.timezone');
         $today = now($timezone)->startOfDay();
+        $horizonEnd = $today->copy()->addDays(62);
 
         return view('booking.slots', [
             'service' => $service,
@@ -92,6 +99,11 @@ class PublicBookingController extends Controller
             'gregorian' => $gregorian,
             'slots' => $slots,
             'step' => 3,
+            'dayStatuses' => $availability->dayStatusesBetween(
+                $service,
+                $today->toDateString(),
+                $horizonEnd->toDateString(),
+            ),
             'quickDates' => [
                 ['label' => 'امروز', 'value' => $calendar->formatDate($today)],
                 ['label' => 'فردا', 'value' => $calendar->formatDate($today->copy()->addDay())],

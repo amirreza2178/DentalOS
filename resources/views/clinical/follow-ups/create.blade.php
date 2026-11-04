@@ -8,8 +8,8 @@
         @if ($visitId)
             <input type="hidden" name="patient_visit_id" value="{{ $visitId }}">
         @endif
-        <x-text-field name="proposed_window_start" label="شروع بازه پیشنهادی (جلالی)" :value="old('proposed_window_start')" placeholder="۱۴۰۴/۰۸/۲۰" required />
-        <x-text-field name="proposed_window_end" label="پایان بازه پیشنهادی (جلالی)" :value="old('proposed_window_end')" placeholder="۱۴۰۴/۰۸/۳۰" required />
+        <x-jalali-date-field name="proposed_window_start" label="شروع بازه پیشنهادی" :value="old('proposed_window_start')" required hint="این بازه نوبت قطعی نمی‌سازد." />
+        <x-jalali-date-field name="proposed_window_end" label="پایان بازه پیشنهادی" :value="old('proposed_window_end')" required />
         <label class="block space-y-1" for="treatment_service_id">
             <span class="text-sm font-medium">خدمت پیشنهادی (اختیاری)</span>
             <select id="treatment_service_id" name="treatment_service_id" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">

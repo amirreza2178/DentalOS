@@ -11,7 +11,7 @@
             <x-select-field name="user_id" label="کارکنان" :options="$staff->mapWithKeys(fn ($user) => [$user->id => $user->name.' — '.$user->role->label()])->all()" required placeholder="انتخاب" />
             <x-select-field name="kind" label="نوع" :options="['recurring' => 'تکرار با شیفت', 'date' => 'یک تاریخ خاص', 'day_off' => 'مرخصی یک روز']" required />
             <x-select-field name="work_shift_id" label="شیفت" :options="$shifts->mapWithKeys(fn ($shift) => [$shift->id => $shift->name.' — '.$shift->weekday->label()])->all()" placeholder="برای مرخصی لازم نیست" />
-            <x-text-field name="schedule_date" label="تاریخ جلالی برای مورد خاص یا مرخصی" />
+            <x-jalali-date-field name="schedule_date" label="تاریخ برای مورد خاص یا مرخصی" hint="فقط برای نوع «یک تاریخ خاص» یا «مرخصی» لازم است." />
             <x-text-field name="starts_at" type="time" label="شروع، فقط برای تاریخ خاص" />
             <x-text-field name="ends_at" type="time" label="پایان، فقط برای تاریخ خاص" />
             <x-checkbox-field name="is_active" label="فعال" :checked="true" />

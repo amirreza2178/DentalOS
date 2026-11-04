@@ -10,7 +10,7 @@
     <x-text-field name="national_id" label="کد ملی" :value="$patient?->national_id" />
     <x-text-field name="mobile" label="موبایل" :value="$patient?->mobile" />
     <x-text-field name="alt_phone" label="شماره تماس دیگر" :value="$patient?->alt_phone" />
-    <x-text-field name="birth_date" label="تاریخ تولد" :value="$birthDate ?? null" placeholder="۱۴۰۴/۰۱/۰۱" />
+    <x-jalali-date-field name="birth_date" label="تاریخ تولد" :value="$birthDate ?? null" hint="اختیاری — با تقویم شمسی انتخاب کنید." />
     <x-select-field name="gender" label="جنسیت" :options="$genderOptions" :value="$patient?->gender" placeholder="انتخاب نشده" />
     <x-select-field name="status" label="وضعیت" :options="$statusOptions" :value="$patient?->status ?? \App\Enums\PatientStatus::Active" required />
     <div class="md:col-span-2">

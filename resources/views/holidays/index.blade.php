@@ -5,7 +5,7 @@
     @endif
     <form method="POST" action="{{ route('holidays.store') }}" class="mb-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-4">
         @csrf
-        <x-text-field name="holiday_date" label="تاریخ جلالی" required />
+        <x-jalali-date-field name="holiday_date" label="تاریخ تعطیلی" required hint="روز بسته‌بودن کلینیک را از تقویم انتخاب کنید." />
         <x-text-field name="title" label="عنوان" required />
         <x-checkbox-field name="is_closed" label="کلینیک بسته است" :checked="true" />
         <button type="submit" class="self-end rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-teal-700">ثبت تعطیلی</button>

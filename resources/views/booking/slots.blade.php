@@ -23,12 +23,18 @@
         @endforeach
     </div>
 
-    <form method="GET" action="{{ route('booking.slots', $service) }}" class="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <label class="block grow space-y-1" for="date">
-            <span class="text-sm font-medium">تاریخ جلالی</span>
-            <input id="date" name="date" value="{{ $date }}" required inputmode="numeric" autocomplete="off" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[color:var(--dos-navy)] focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]/40">
-        </label>
-        <button type="submit" class="min-h-11 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-navy)]">به‌روزرسانی</button>
+    <form method="GET" action="{{ route('booking.slots', $service) }}" class="mb-5 rounded-2xl border border-slate-200 bg-white p-4">
+        <x-jalali-date-field
+            name="date"
+            label="تغییر تاریخ"
+            :value="$date"
+            :booking-only="true"
+            :disable-past="true"
+            :day-statuses="$dayStatuses"
+            :auto-submit="true"
+            hint="با انتخاب روز دیگر، زمان‌های آزاد همان روز بارگذاری می‌شود."
+            required
+        />
     </form>
 
     @if ($gregorian && $slots === [])

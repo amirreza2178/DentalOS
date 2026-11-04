@@ -47,15 +47,18 @@
                 </div>
             @endif
 
-            <form method="GET" class="mt-3 flex flex-wrap items-end gap-3">
-                <label class="block space-y-1" for="date">
-                    <span class="text-xs font-medium text-slate-600">تاریخ جلالی</span>
-                    <input id="date" name="date" value="{{ $date }}" placeholder="۱۴۰۴/۰۱/۰۱" inputmode="numeric" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
-                </label>
+            <form method="GET" class="mt-3 flex flex-col gap-3 sm:max-w-md">
+                <x-jalali-date-field
+                    name="date"
+                    label="تاریخ جلالی"
+                    :value="$date"
+                    :auto-submit="true"
+                    hint="روز کلینیک را از تقویم انتخاب کنید."
+                />
                 @if (($onlineScope ?? 'day') === 'all')
                     <input type="hidden" name="online" value="all">
                 @endif
-                <button type="submit" class="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">نمایش روز</button>
+                <button type="submit" class="min-h-11 self-start rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">نمایش روز</button>
             </form>
         </div>
     </div>

@@ -1,4 +1,7 @@
 import './bootstrap';
+import { initJalaliDatePickers } from './jalali-date-picker';
+
+initJalaliDatePickers();
 
 document.addEventListener('click', (event) => {
     const toggle = event.target.closest('[data-nav-toggle]');

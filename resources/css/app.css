@@ -141,3 +141,128 @@
         flex-direction: column;
     }
 }
+
+/* Shared Jalali date picker */
+.dos-cal--popover .dos-cal-panel {
+    display: none;
+}
+
+.dos-cal--popover[data-open='1'] .dos-cal-panel {
+    display: block;
+}
+
+.dos-cal-nav {
+    display: inline-flex;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    font-size: 1.125rem;
+    line-height: 1;
+    color: var(--dos-navy);
+}
+
+.dos-cal-nav:hover {
+    background: #f8fafc;
+}
+
+.dos-cal-nav:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--dos-accent) 40%, transparent);
+}
+
+.dos-cal-day {
+    display: inline-flex;
+    min-height: 2.75rem;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    background: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dos-navy);
+    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.dos-cal-day:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--dos-accent) 70%, #94a3b8);
+    background: color-mix(in srgb, var(--dos-accent) 12%, #fff);
+}
+
+.dos-cal-day:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--dos-accent) 45%, transparent);
+}
+
+.dos-cal-day--empty {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.dos-cal-day--today {
+    border-color: #0f766e;
+}
+
+.dos-cal-day--selected {
+    background: var(--dos-navy);
+    border-color: var(--dos-navy);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.dos-cal-day--open {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+}
+
+.dos-cal-day--full {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: #9a3412;
+}
+
+.dos-cal-day--closed,
+.dos-cal-day--disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.dos-cal-day--selected.dos-cal-day--open,
+.dos-cal-day--selected.dos-cal-day--full {
+    background: var(--dos-navy);
+    border-color: var(--dos-navy);
+    color: #fff;
+}
+
+.dos-cal-legend {
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+}
+
+.dos-cal-legend--open {
+    background: #6ee7b7;
+}
+
+.dos-cal-legend--full {
+    background: #fdba74;
+}
+
+.dos-cal-legend--closed {
+    background: #cbd5e1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dos-cal-day {
+        transition: none;
+    }
+}

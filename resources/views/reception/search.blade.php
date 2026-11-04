@@ -3,15 +3,12 @@
         <a href="{{ route('reception.day', ['date' => $date]) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">بازگشت به میز</a>
     </x-page-header>
 
-    <form method="GET" action="{{ route('reception.search') }}" class="mb-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_10rem_auto]">
+    <form method="GET" action="{{ route('reception.search') }}" class="mb-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_16rem_auto]">
         <label class="block space-y-1" for="q">
             <span class="text-sm font-medium">عبارت جستجو</span>
             <input id="q" name="q" value="{{ $term }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30" autocomplete="off">
         </label>
-        <label class="block space-y-1" for="date">
-            <span class="text-sm font-medium">تاریخ جلالی</span>
-            <input id="date" name="date" value="{{ $date }}" inputmode="numeric" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
-        </label>
+        <x-jalali-date-field name="date" label="تاریخ جلالی" :value="$date" hint="نوبت‌های همان روز کنار نتیجه نشان داده می‌شود." />
         <button type="submit" class="self-end rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">جستجو</button>
     </form>
 

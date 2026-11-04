@@ -66,6 +66,20 @@ class PublicOnlineBookingTest extends TestCase
             ->assertDontSee('فقط داخلی');
     }
 
+    public function test_public_date_step_renders_shared_jalali_calendar_with_bookable_days(): void
+    {
+        $clinic = $this->makeClinic();
+        $jalali = app(JalaliCalendar::class)->formatDate('2026-11-07');
+
+        $this->get(route('booking.service', $clinic['service']))
+            ->assertOk()
+            ->assertSee('data-jalali-date-picker', false)
+            ->assertSee('data-booking-only="1"', false)
+            ->assertSee('قابل رزرو')
+            // JSON encodes slashes, so the bookable day appears as 1405\/08\/16 in the payload.
+            ->assertSee(str_replace('/', '\/', $jalali).'":"open"', false);
+    }
+
     public function test_guest_can_see_real_slots_and_submit_pending_request(): void
     {
         $clinic = $this->makeClinic();
@@ -74,7 +88,8 @@ class PublicOnlineBookingTest extends TestCase
         $this->get(route('booking.slots', ['service' => $clinic['service'], 'date' => $jalali]))
             ->assertOk()
             ->assertSee('08:00')
-            ->assertSee('08:40');
+            ->assertSee('08:40')
+            ->assertSee('data-jalali-date-picker', false);
 
         $key = (string) Str::uuid();
         $response = $this->post(route('booking.store'), $this->payload($clinic, $jalali, '08:00:00', $key));

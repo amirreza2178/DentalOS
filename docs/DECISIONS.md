@@ -381,3 +381,9 @@
 - **وضعیت:** confirmed (Day 11 final)
 - **تصمیم:** `CancelAppointment` همان نقش‌های Policy (Admin/Receptionist) را داخل Action اعمال می‌کند. خروجی `CancelAppointmentResult` با `cancelled` / `already_cancelled` است (نه `wasChanged`). تراکنش لغو تا ۳ بار برای deadlock retry می‌شود؛ تکرار پس از commit، event دوم نمی‌سازد. harnessهای همزمانی MariaDB (پذیرش و رزرو) payload حساس را فقط از STDIN می‌گیرند؛ argv فقط نام DB allowlist و مسیر نتیجه است؛ پیام خطای child فقط نام کلاس است.
 - **دلیل:** ممیزی Day 11؛ جلوگیری از دور زدن FormRequest، سیگنال شکنندهٔ Eloquent، و افشای رمز در argv/لاگ.
+
+## D-064 — یک تقویم جلالی مشترک در مرز نمایش
+- **تاریخ:** 2026-11-04
+- **وضعیت:** confirmed
+- **تصمیم:** همهٔ انتخاب‌های تاریخ کاربر از `x-jalali-date-field` می‌گذرد. ورودی UI جلالی `YYYY/MM/DD` است؛ ذخیرهٔ canonical میلادی `Y-m-d` (و datetime با `Asia/Tehran`) می‌ماند. تبدیل فقط از `JalaliCalendar` (+ FormRequest). وضعیت روز رزرو عمومی (`open`/`full`/`closed`) فقط از `AvailabilityService` محاسبه می‌شود؛ فرانت قوانین availability را تکرار نمی‌کند. ساعت جدا از تاریخ می‌ماند (`type=time` یا اسلات). dependency جدید datepicker اضافه نشد؛ `morilog/jalali` موجود reuse شد.
+- **دلیل:** یک تجربهٔ تقویم در محصول؛ جلوگیری از off-by-one و ذخیرهٔ رشتهٔ جلالی در DB.

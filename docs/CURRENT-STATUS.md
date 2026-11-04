@@ -1,25 +1,31 @@
 # وضعیت جاری DentalOS
 
 آخرین به‌روزرسانی: 2026-11-04  
-فاز: Day 11 Final Stabilization — **آماده تأیید commit** (هنوز commit/push نشده)
+فاز: Unified Jalali Calendar — **QA نهایی انجام شد؛ آماده تأیید commit** (هنوز commit/push نشده)
 
 ---
 
 ## Git
 
-- شاخه: `master` @ `8ab1b58` + working tree Day 11.1–11.4
-- جلوتر از `origin/master` به‌اندازه ۱ commit (`8ab1b58`)
+- شاخه: `master` @ `9be98a9` (Day 11 concurrency hardening) + working tree تقویم جلالی
+- جلوتر از `origin/master` به‌اندازه ۲ commit
 - بدون secrets در مسیر commit
+- Push انجام نشده
 
 ---
 
-## Day 11 — خلاصه پایدار
+## Day 11 — commit شده (verified)
 
-- دلیل ساختاریافته لغو + focus پیگیری (در `8ab1b58`)
-- mutex روز صف؛ cancel/check-in/online race harness
-- `checked_in` پس از خروج از صف حفظ می‌شود؛ لغو فقط با Visit=cancelled + صف `removed`
-- `ReceptionCancellationGate` مشترک Action/UI
-- هر دو child همزمانی MariaDB: STDIN (نه argv رمز)
+- Hash: `9be98a9` — `feat: day 11 concurrency hardening for cancel, check-in, and races`
+
+---
+
+## تقویم جلالی — پس از QA
+
+- کامپوننت مشترک `x-jalali-date-field`
+- `dayStatusesBetween` با batch holiday/shift + catalog cache + short-circuit `hasOpening`
+- a11y: `role=region` + `hidden` روی پنل popover
+- JS parity با جفت‌های شناخته‌شده: OK
 
 ---
 
@@ -27,15 +33,15 @@
 
 | منبع | نتیجه |
 |------|--------|
-| `php artisan test` (sqlite؛ پس از اصلاح STDIN رزرو) | در همین جلسه اجرا می‌شود |
-| InnoDB روی `test_dental_os` (اجرای تأییدشده قبلی) | **7 passed / 66 assertions** — پس از STDIN رزرو **دوباره اجرا نشد** (بدون تأیید مجدد migrate:fresh) |
-| Browser E2E authenticated | **NOT VERIFIED** |
+| `npm run build` | OK |
+| JS Jalali parity (۸ جفت + leap) | OK |
+| `php artisan test` | **121 passed / 7 skipped / 672 assertions** |
+| Browser/device walkthrough | **NOT VERIFIED** |
 
 ---
 
-## کار بعدی پس از تأیید کاربر
+## کار بعدی
 
-1. Commit Day 11  
-2. (اختیاری) یک‌بار دیگر InnoDB suite روی `test_dental_os` بعد از STDIN رزرو  
-3. Browser walkthrough  
-4. Day 12
+1. تأیید صریح commit تقویم
+2. Browser checklist (موبایل/دسکتاپ)
+3. (اختیاری) push پس از commit

@@ -21,10 +21,12 @@
             @endforeach
         </select>
     </label>
-    <label class="block space-y-1" for="date">
-        <span class="text-sm font-medium">تاریخ جلالی</span>
-        <input id="date" name="date" value="{{ $date }}" placeholder="۱۴۰۴/۰۱/۰۱" inputmode="numeric" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
-    </label>
+    <x-jalali-date-field
+        name="date"
+        label="تاریخ جلالی"
+        :value="$date"
+        hint="پس از انتخاب تاریخ، زمان‌های آزاد همان روز از AvailabilityService بارگذاری می‌شود."
+    />
     <label class="block space-y-1" for="time">
         <span class="text-sm font-medium">بررسی یک ساعت مشخص</span>
         <input id="time" name="time" type="time" value="{{ $time }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
@@ -94,5 +96,5 @@
 @elseif ($services->isEmpty())
     <x-empty-state title="خدمت فعالی ثبت نشده است" description="تا وقتی خدمت واقعی تعریف نشود، نوبتی ساخته نمی‌شود." />
 @elseif ($patient && $date === '')
-    <x-empty-state title="تاریخ را وارد کنید" description="تاریخ جلالی را بنویسید تا زمان‌های آزاد همان روز نشان داده شود." />
+    <x-empty-state title="تاریخ را انتخاب کنید" description="از تقویم شمسی یک روز را انتخاب کنید تا زمان‌های آزاد همان روز نشان داده شود." />
 @endif

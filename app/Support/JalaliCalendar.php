@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use InvalidArgumentException;
 use Morilog\Jalali\CalendarUtils;
@@ -13,6 +14,26 @@ use Morilog\Jalali\CalendarUtils;
  */
 final class JalaliCalendar
 {
+    /** @var list<string> */
+    public const MONTH_NAMES = [
+        1 => 'فروردین',
+        2 => 'اردیبهشت',
+        3 => 'خرداد',
+        4 => 'تیر',
+        5 => 'مرداد',
+        6 => 'شهریور',
+        7 => 'مهر',
+        8 => 'آبان',
+        9 => 'آذر',
+        10 => 'دی',
+        11 => 'بهمن',
+        12 => 'اسفند',
+    ];
+
+    /** Saturday-first weekday short labels. */
+    /** @var list<string> */
+    public const WEEKDAY_LABELS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+
     public function formatDate(CarbonInterface|string|null $date): ?string
     {
         if ($date === null || $date === '') {
@@ -24,6 +45,51 @@ final class JalaliCalendar
         [$jalaliYear, $jalaliMonth, $jalaliDay] = CalendarUtils::toJalali($year, $month, $day);
 
         return sprintf('%04d/%02d/%02d', $jalaliYear, $jalaliMonth, $jalaliDay);
+    }
+
+    /**
+     * @return array{year: int, month: int, day: int}
+     */
+    public function jalaliParts(CarbonInterface|string $date): array
+    {
+        $gregorian = $date instanceof CarbonInterface ? $date->format('Y-m-d') : $date;
+        [$year, $month, $day] = $this->parts($gregorian, '-');
+        [$jalaliYear, $jalaliMonth, $jalaliDay] = CalendarUtils::toJalali($year, $month, $day);
+
+        return [
+            'year' => $jalaliYear,
+            'month' => $jalaliMonth,
+            'day' => $jalaliDay,
+        ];
+    }
+
+    public function monthName(int $jalaliMonth): string
+    {
+        return self::MONTH_NAMES[$jalaliMonth] ?? '';
+    }
+
+    public function daysInJalaliMonth(int $jalaliYear, int $jalaliMonth): int
+    {
+        if ($jalaliMonth < 1 || $jalaliMonth > 12) {
+            throw new InvalidArgumentException('Jalali month is out of range.');
+        }
+
+        return CalendarUtils::jalaliMonthLength($jalaliYear, $jalaliMonth);
+    }
+
+    public function isJalaliLeapYear(int $jalaliYear): bool
+    {
+        return CalendarUtils::isLeapJalaliYear($jalaliYear);
+    }
+
+    /**
+     * Saturday = 0 … Friday = 6 for the given Gregorian civil date.
+     */
+    public function saturdayBasedWeekdayIndex(string $gregorianDate): int
+    {
+        $phpWeekday = Carbon::parse($gregorianDate.' 12:00:00', config('app.timezone', 'Asia/Tehran'))->dayOfWeek;
+
+        return ($phpWeekday + 1) % 7;
     }
 
     public function parseToGregorianDate(?string $input): ?string

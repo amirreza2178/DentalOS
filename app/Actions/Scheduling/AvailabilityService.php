@@ -16,11 +16,24 @@ use App\Models\TreatmentService;
 use App\Models\User;
 use App\Models\WorkShift;
 use App\Support\ClockInput;
+use App\Support\JalaliCalendar;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class AvailabilityService
 {
+    /** @var array<string, Collection<int, User>>|null */
+    private ?array $roleUserCache = null;
+
+    /** @var Collection<int, Chair>|null */
+    private ?Collection $activeChairCache = null;
+
+    /** @var array<string, string>|null Y-m-d => holiday title */
+    private ?array $closedHolidayTitleCache = null;
+
+    /** @var Collection<int, WorkShift>|null */
+    private ?Collection $activeShiftCache = null;
+
     /**
      * @return array{0: Carbon, 1: Carbon, 2: Carbon}
      */
@@ -80,6 +93,116 @@ class AvailabilityService
         }
 
         return $slots;
+    }
+
+    /**
+     * Calendar day classification for UI. Rules stay inside AvailabilityService.
+     *
+     * @return 'open'|'full'|'closed'
+     */
+    public function dayStatus(TreatmentService $service, string $gregorianDate, ?int $patientId = null): string
+    {
+        if (! $service->is_active) {
+            return 'closed';
+        }
+
+        $day = Carbon::parse($gregorianDate, config('app.timezone'))->startOfDay();
+        $shifts = $this->activeShifts($day);
+
+        if ($this->closedHoliday($day) !== null || $shifts->isEmpty()) {
+            return 'closed';
+        }
+
+        return $this->hasOpening($service, $day, $shifts, $patientId) ? 'open' : 'full';
+    }
+
+    /**
+     * Inclusive Gregorian Y-m-d range → Jalali date key map for the shared picker.
+     * Holidays and shifts are loaded once for the range; opening checks short-circuit.
+     *
+     * @return array<string, 'open'|'full'|'closed'>
+     */
+    public function dayStatusesBetween(
+        TreatmentService $service,
+        string $fromGregorian,
+        string $toGregorian,
+        ?int $patientId = null,
+    ): array {
+        $calendar = app(JalaliCalendar::class);
+        $cursor = Carbon::parse($fromGregorian, config('app.timezone'))->startOfDay();
+        $end = Carbon::parse($toGregorian, config('app.timezone'))->startOfDay();
+        $map = [];
+
+        if ($cursor->greaterThan($end)) {
+            return [];
+        }
+
+        $this->beginCatalogCache($cursor->toDateString(), $end->toDateString());
+
+        try {
+            while ($cursor->lessThanOrEqualTo($end)) {
+                $gregorian = $cursor->toDateString();
+                $jalali = $calendar->formatDate($gregorian);
+
+                if ($jalali === null) {
+                    $cursor->addDay();
+
+                    continue;
+                }
+
+                if (! $service->is_active || isset($this->closedHolidayTitleCache[$gregorian])) {
+                    $map[$jalali] = 'closed';
+                    $cursor->addDay();
+
+                    continue;
+                }
+
+                $shifts = $this->activeShifts($cursor);
+
+                if ($shifts->isEmpty()) {
+                    $map[$jalali] = 'closed';
+                } else {
+                    $map[$jalali] = $this->hasOpening($service, $cursor->copy()->startOfDay(), $shifts, $patientId)
+                        ? 'open'
+                        : 'full';
+                }
+
+                $cursor->addDay();
+            }
+
+            return $map;
+        } finally {
+            $this->clearCatalogCache();
+        }
+    }
+
+    /**
+     * @param  Collection<int, WorkShift>  $shifts
+     */
+    private function hasOpening(
+        TreatmentService $service,
+        Carbon $day,
+        Collection $shifts,
+        ?int $patientId,
+    ): bool {
+        foreach ($shifts as $shift) {
+            $cursor = $this->onDate($day, $shift->starts_at);
+            $shiftEnd = $this->onDate($day, $shift->ends_at);
+
+            while ($cursor->copy()->addMinutes($service->occupiedMinutes())->lessThanOrEqualTo($shiftEnd)) {
+                $allocationEnd = $cursor->copy()->addMinutes($service->occupiedMinutes());
+
+                if (! $this->overlapsBreak($shift, $cursor, $allocationEnd)) {
+                    if ($this->optionFor($service, $cursor->copy(), $patientId) !== null) {
+                        return true;
+                    }
+                }
+
+                $cursor = $cursor->addMinutes($service->default_duration_minutes);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -396,11 +519,7 @@ class AvailabilityService
      */
     private function eligibleChairs(TreatmentService $service, Carbon $start, Carbon $end, ?int $ignoreAppointmentId): Collection
     {
-        return Chair::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('code')
-            ->get()
+        return $this->activeChairs()
             ->filter(fn (Chair $chair): bool => $chair->supportsCapabilities($service->capabilityRequirements()))
             ->filter(fn (Chair $chair): bool => ! $this->resourceBusy(ResourceType::Chair, $chair->id, $start, $end, $ignoreAppointmentId))
             ->values();
@@ -410,6 +529,63 @@ class AvailabilityService
      * @return Collection<int, User>
      */
     private function roleUsers(UserRole $role): Collection
+    {
+        if ($this->roleUserCache !== null) {
+            return $this->roleUserCache[$role->value] ?? collect();
+        }
+
+        return $this->loadRoleUsers($role);
+    }
+
+    /**
+     * @return Collection<int, Chair>
+     */
+    private function activeChairs(): Collection
+    {
+        if ($this->activeChairCache !== null) {
+            return $this->activeChairCache;
+        }
+
+        return $this->loadActiveChairs();
+    }
+
+    private function beginCatalogCache(string $fromGregorian, string $toGregorian): void
+    {
+        $this->roleUserCache = [
+            UserRole::Specialist->value => $this->loadRoleUsers(UserRole::Specialist),
+            UserRole::ClinicalStaff->value => $this->loadRoleUsers(UserRole::ClinicalStaff),
+        ];
+        $this->activeChairCache = $this->loadActiveChairs();
+        $this->activeShiftCache = WorkShift::query()
+            ->where('is_active', true)
+            ->with('breaks')
+            ->orderBy('starts_at')
+            ->get();
+        $this->closedHolidayTitleCache = Holiday::query()
+            ->where('is_closed', true)
+            ->whereDate('holiday_date', '>=', $fromGregorian)
+            ->whereDate('holiday_date', '<=', $toGregorian)
+            ->get()
+            ->mapWithKeys(function (Holiday $holiday): array {
+                $date = Carbon::parse($holiday->holiday_date, config('app.timezone'))->toDateString();
+
+                return [$date => (string) $holiday->title];
+            })
+            ->all();
+    }
+
+    private function clearCatalogCache(): void
+    {
+        $this->roleUserCache = null;
+        $this->activeChairCache = null;
+        $this->activeShiftCache = null;
+        $this->closedHolidayTitleCache = null;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    private function loadRoleUsers(UserRole $role): Collection
     {
         return User::query()
             ->where('role', $role->value)
@@ -421,6 +597,18 @@ class AvailabilityService
                 return $user->staffProfile !== null && $user->staffProfile->is_active;
             })
             ->values();
+    }
+
+    /**
+     * @return Collection<int, Chair>
+     */
+    private function loadActiveChairs(): Collection
+    {
+        return Chair::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('code')
+            ->get();
     }
 
     private function allocatableUser(int $userId, UserRole $role): ?User
@@ -527,6 +715,12 @@ class AvailabilityService
      */
     private function activeShifts(Carbon $day): Collection
     {
+        if ($this->activeShiftCache !== null) {
+            return $this->activeShiftCache
+                ->filter(fn (WorkShift $shift): bool => $shift->weekday->value === $day->dayOfWeek)
+                ->values();
+        }
+
         return WorkShift::query()
             ->where('is_active', true)
             ->where('weekday', $day->dayOfWeek)
@@ -537,6 +731,20 @@ class AvailabilityService
 
     private function closedHoliday(Carbon $day): ?Holiday
     {
+        if ($this->closedHolidayTitleCache !== null) {
+            $title = $this->closedHolidayTitleCache[$day->toDateString()] ?? null;
+
+            if ($title === null) {
+                return null;
+            }
+
+            return new Holiday([
+                'holiday_date' => $day->toDateString(),
+                'title' => $title,
+                'is_closed' => true,
+            ]);
+        }
+
         return Holiday::query()
             ->whereDate('holiday_date', $day->toDateString())
             ->where('is_closed', true)
