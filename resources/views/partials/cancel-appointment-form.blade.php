@@ -5,7 +5,13 @@
     'compact' => false,
 ])
 @can('cancel', $appointment)
-    @if ($appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Cancelled))
+    @php
+        $gate = app(\App\Support\ReceptionCancellationGate::class);
+        $blockReason = $gate->blockReason($appointment);
+        $canOfferCancel = $blockReason === null
+            && $appointment->status->canTransitionTo(\App\Enums\AppointmentStatus::Cancelled);
+    @endphp
+    @if ($canOfferCancel)
         <form method="POST" action="{{ route('appointments.cancel', $appointment) }}" class="{{ $compact ? 'space-y-2' : 'mt-4 space-y-3' }}" onsubmit="return confirm('این نوبت با دلیل انتخاب‌شده لغو شود؟')">
             @csrf
             @if ($returnTo)
@@ -42,5 +48,7 @@
             </label>
             <button type="submit" class="{{ $compact ? 'w-full rounded-lg border border-rose-300 px-3 py-2 text-xs font-medium text-rose-800 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-700' : 'rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-800 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-700' }}">لغو نوبت</button>
         </form>
+    @elseif ($blockReason)
+        <p class="{{ $compact ? '' : 'mt-4 ' }}text-xs text-slate-500">{{ $blockReason }}</p>
     @endif
 @endcan

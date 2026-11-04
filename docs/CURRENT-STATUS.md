@@ -1,80 +1,41 @@
 # وضعیت جاری DentalOS
 
-آخرین به‌روزرسانی: 2026-11-03  
-فاز: Reception UX Comfort Pass (پس از Day 10)  
-پیش از آن: Day 10 — Acceptance & Operational Readiness
-
----
-
-## فاز و مایلستون
-
-Day 1 تا Day 5: `2f16bc5e85a73344a1b71a93a31f428bba85859d`  
-Day 6: `8624aa99b204e7d6f67fd320026aafcc39b411c0`  
-Day 7: `67fa2d8b10683fbe0badd51a96fbeef28bfe2560`  
-Day 8: `a5b88af`  
-Day 9: `b0a7860`  
-Day 10: `7340da6`  
-Reception UX Comfort: `c3ae859`
-
-اپ محلی به **MariaDB** وصل است: پایگاه `dental_os`، کاربر `dental_os_app`.
+آخرین به‌روزرسانی: 2026-11-04  
+فاز: Day 11 Final Stabilization — **آماده تأیید commit** (هنوز commit/push نشده)
 
 ---
 
 ## Git
 
-- شاخه: `master`
-- Remote: `origin` = `https://github.com/amirreza2178/DentalOS.git`
-- `.env` و `storage/app/private/*` در `.gitignore` هستند
+- شاخه: `master` @ `8ab1b58` + working tree Day 11.1–11.4
+- جلوتر از `origin/master` به‌اندازه ۱ commit (`8ab1b58`)
+- بدون secrets در مسیر commit
 
 ---
 
-## MariaDB
+## Day 11 — خلاصه پایدار
 
-| مورد | نتیجه |
+- دلیل ساختاریافته لغو + focus پیگیری (در `8ab1b58`)
+- mutex روز صف؛ cancel/check-in/online race harness
+- `checked_in` پس از خروج از صف حفظ می‌شود؛ لغو فقط با Visit=cancelled + صف `removed`
+- `ReceptionCancellationGate` مشترک Action/UI
+- هر دو child همزمانی MariaDB: STDIN (نه argv رمز)
+
+---
+
+## شواهد تست
+
+| منبع | نتیجه |
 |------|--------|
-| اتصال Laravel | `pdo=ok` / `driver=mariadb` |
-| `dental_os` | داده عملیاتی محلی؛ `migrate:fresh` اجرا نشد |
-| `test_dental_os` | suite همزمانی InnoDB با `MARIADB_CONCURRENCY_TEST=1` |
-| PHPUnit پیش‌فرض | sqlite `:memory:` |
+| `php artisan test` (sqlite؛ پس از اصلاح STDIN رزرو) | در همین جلسه اجرا می‌شود |
+| InnoDB روی `test_dental_os` (اجرای تأییدشده قبلی) | **7 passed / 66 assertions** — پس از STDIN رزرو **دوباره اجرا نشد** (بدون تأیید مجدد migrate:fresh) |
+| Browser E2E authenticated | **NOT VERIFIED** |
 
 ---
 
-## آنچه در Reception UX Comfort Pass پیاده شد
+## کار بعدی پس از تأیید کاربر
 
-### ناوبری نقش‌آگاه پذیرش
-- مسیر روزانه پذیرش: مرکز فرمان، بیماران، نوبت‌ها، درخواست‌های آنلاین، پیگیری‌ها، هفته
-- موارد کمترروزانه (متخصصان، کادر، یونیت، خدمات، برنامه‌/وظایف درمانی، میز کار) زیر «مدیریت / تنظیمات»
-- ادمین همچنان گروه مدیریت غنی‌تر دارد؛ دسترسی متخصص/ادمین شکسته نشد
-
-### مرکز فرمان
-- CTA «ثبت بیمار جدید» کنار جستجوی سریع (مسیر واقعی `patients.create`؛ هدف لمسی موبایل حفظ شد)
-- «لغو» روی کارت موبایل و جدول دسکتاپ با همان Policy/`CancelAppointment` و confirm موجود؛ `return_to=reception.day` بدون تضعیف CSRF/authz
-- درخواست آنلاین معلق به‌صورت پیش‌فرض فقط برای روز جلالی انتخاب‌شده؛ لینک «همه روزها»
-- حذف ردیف‌های تکراری پیگیری برای همان بیمار + خدمت + وضعیت
-
-## آنچه عمداً ساخته نشد
-
-Billing، SMS/OTP، درگاه پرداخت، WebSocket، portal بیمار، multi-clinic، hosting/deploy.
-
----
-
-## دستورها و نتایج واقعی
-
-| دستور | نتیجه |
-|------|--------|
-| `php artisan test` | **96 passed / 2 skipped / 561 assertions** |
-| `ReceptionCommandCenterTest` | **8 passed** |
-| Browser پذیرش روی `/reception` | **OK** با نشست محلی موجود: CTA ثبت بیمار، لغو، «همه روزها»، ناوبری اولیه + «مدیریت / تنظیمات» |
-| `migrate:fresh` | اجرا نشد |
-
-### تست‌های skipped (بدون فلگ همزمانی)
-1. `Tests\Feature\Clinical\MariaDbConcurrencyGateTest::test_dedicated_mariadb_concurrency_database_is_available_or_explicitly_blocked` — نیاز به `MARIADB_CONCURRENCY_TEST=1`
-2. `Tests\Feature\Clinical\MariaDbConcurrencyGateTest::test_innodb_two_processes_compete_for_one_slot_and_only_one_reserves` — همان شرط
-
----
-
-## کار بعدی پیشنهادی
-
-1. Billing پایه حضوری (Invoice/Payment/Balance) بدون درگاه آنلاین.  
-2. اصطکاک باقی‌مانده پذیرش: reason اجباری برای لغو (فعلاً فقط confirm)، و فیلتر روز برای پیگیری‌ها.  
-3. یا portal بیمار پس از تصمیم پیامک.
+1. Commit Day 11  
+2. (اختیاری) یک‌بار دیگر InnoDB suite روی `test_dental_os` بعد از STDIN رزرو  
+3. Browser walkthrough  
+4. Day 12

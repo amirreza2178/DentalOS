@@ -2,6 +2,7 @@
 
 namespace App\Actions\Reception;
 
+use App\Actions\Scheduling\ReservationMutex;
 use App\Enums\AppointmentStatus;
 use App\Enums\OperationalEventType;
 use App\Enums\QueueStatus;
@@ -22,6 +23,7 @@ class CheckInAppointment
     public function __construct(
         private readonly RecordOperationalEvent $events,
         private readonly ClinicDay $clinicDay,
+        private readonly ReservationMutex $mutex,
     ) {}
 
     /**
@@ -35,6 +37,8 @@ class CheckInAppointment
 
         return DB::transaction(function () use ($appointment, $actor): array {
             $appointment = Appointment::query()->whereKey($appointment->id)->lockForUpdate()->firstOrFail();
+            $queueDate = $appointment->starts_at->timezone($this->clinicDay->timezone())->toDateString();
+            $this->mutex->acquireQueueDay($queueDate);
 
             $existing = PatientVisit::query()
                 ->where('appointment_id', $appointment->id)
@@ -80,7 +84,6 @@ class CheckInAppointment
             }
 
             $now = now($this->clinicDay->timezone());
-            $queueDate = $appointment->starts_at->timezone($this->clinicDay->timezone())->toDateString();
 
             WaitingQueueEntry::query()
                 ->whereDate('queue_date', $queueDate)
@@ -121,6 +124,6 @@ class CheckInAppointment
                 'queue' => $queue,
                 'created' => true,
             ];
-        });
+        }, 3);
     }
 }

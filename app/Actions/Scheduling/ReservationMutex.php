@@ -20,6 +20,24 @@ class ReservationMutex
 {
     public const PATIENT = 'patient';
 
+    public const QUEUE_DAY = 'queue_day';
+
+    /**
+     * Serializes check-ins for one clinic day before any gap-locking reads,
+     * otherwise two simultaneous check-ins deadlock on InnoDB.
+     */
+    public function acquireQueueDay(string $date): void
+    {
+        $id = (int) str_replace('-', '', $date);
+
+        $this->writeLock(self::QUEUE_DAY, $id);
+        ReservationLock::query()
+            ->where('resource_type', self::QUEUE_DAY)
+            ->where('resource_id', $id)
+            ->lockForUpdate()
+            ->first();
+    }
+
     /**
      * @param  list<array{type: string, id: int}>  $resources
      */

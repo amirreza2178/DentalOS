@@ -151,6 +151,22 @@ class MariaDbConcurrencyGateTest extends TestCase
                 actorUserId: $actor->id,
             ));
 
+            $stdinPayload = json_encode([
+                'patient_id' => $data->patientId,
+                'treatment_service_id' => $data->treatmentServiceId,
+                'starts_at' => '2026-11-07 08:00:00',
+                'specialist_id' => $data->specialistId,
+                'clinical_staff_ids' => $data->clinicalStaffIds,
+                'chair_id' => $data->chairId,
+                'actor_id' => $actor->id,
+                'db' => [
+                    'host' => config('database.connections.mariadb.host'),
+                    'port' => config('database.connections.mariadb.port'),
+                    'username' => config('database.connections.mariadb.username'),
+                    'password' => config('database.connections.mariadb.password'),
+                ],
+            ], JSON_THROW_ON_ERROR);
+
             $pipes = [];
             $process = proc_open(
                 [
@@ -158,19 +174,6 @@ class MariaDbConcurrencyGateTest extends TestCase
                     base_path('tests/Support/competing_reserve_mariadb.php'),
                     $this->isolatedDatabase,
                     $resultPath,
-                    base64_encode(json_encode([
-                        'patient_id' => $data->patientId,
-                        'treatment_service_id' => $data->treatmentServiceId,
-                        'starts_at' => '2026-11-07 08:00:00',
-                        'specialist_id' => $data->specialistId,
-                        'clinical_staff_ids' => $data->clinicalStaffIds,
-                        'chair_id' => $data->chairId,
-                        'actor_id' => $actor->id,
-                        'host' => config('database.connections.mariadb.host'),
-                        'port' => config('database.connections.mariadb.port'),
-                        'username' => config('database.connections.mariadb.username'),
-                        'password' => config('database.connections.mariadb.password'),
-                    ])),
                 ],
                 [
                     0 => ['pipe', 'r'],
@@ -182,7 +185,11 @@ class MariaDbConcurrencyGateTest extends TestCase
             );
 
             $this->assertIsResource($process);
-            fclose($pipes[0]);
+            try {
+                fwrite($pipes[0], $stdinPayload);
+            } finally {
+                fclose($pipes[0]);
+            }
             usleep(1500000);
             DB::commit();
 

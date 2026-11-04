@@ -236,7 +236,8 @@ class SchedulingEngineTest extends TestCase
     {
         $clinic = $this->makeClinic();
         $appointment = $this->reserveAt($clinic, '08:00');
-        app(CancelAppointment::class)->cancel($appointment, reason: \App\Enums\CancellationReason::BookedInError);
+        $receptionist = $this->signIn(UserRole::Receptionist);
+        app(CancelAppointment::class)->cancel($appointment, $receptionist, \App\Enums\CancellationReason::BookedInError);
 
         $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
         $this->assertSame(3, $appointment->allocations()->count());

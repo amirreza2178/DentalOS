@@ -293,6 +293,55 @@ class ReceptionCommandCenterTest extends TestCase
         $this->assertSame(1, \App\Models\OperationalEvent::query()->where('subject_id', $appointment->id)->where('event_type', 'appointment_cancelled')->count());
     }
 
+    public function test_second_cancel_is_told_the_appointment_was_already_cancelled(): void
+    {
+        $clinic = $this->makeClinic();
+        $this->signIn(UserRole::Receptionist);
+        $appointment = $this->reserveAt($clinic, '08:00');
+        $payload = ['cancellation_reason' => \App\Enums\CancellationReason::PatientRequest->value];
+
+        $this->post(route('appointments.cancel', $appointment), $payload)
+            ->assertSessionHas('status', 'نوبت لغو شد و منابعش برای رزرو بعدی آزاد شد.');
+
+        $this->post(route('appointments.cancel', $appointment), ['cancellation_reason' => \App\Enums\CancellationReason::Other->value])
+            ->assertSessionHas('status', 'این نوبت پیش‌تر لغو شده بود؛ دلیل ثبت‌شدهٔ قبلی تغییر نکرد.');
+
+        $this->assertSame('cancel:patient_request', $appointment->fresh()->decision_reason);
+    }
+
+    public function test_checked_in_appointment_cannot_be_cancelled_until_removed_from_queue(): void
+    {
+        $clinic = $this->makeClinic();
+        $user = $this->signIn(UserRole::Receptionist);
+        $date = app(JalaliCalendar::class)->formatDate('2026-11-07');
+        $appointment = $this->reserveAt($clinic, '08:00');
+        $checkIn = app(\App\Actions\Reception\CheckInAppointment::class)->handle($appointment, $user);
+
+        $this->get(route('reception.day', ['date' => $date]))
+            ->assertOk()
+            ->assertSee('اول او را از صف خارج کنید', false)
+            ->assertDontSee('name="cancellation_reason"', false);
+
+        $this->from(route('reception.day', ['date' => $date]))
+            ->post(route('appointments.cancel', $appointment), [
+                'cancellation_reason' => \App\Enums\CancellationReason::PatientRequest->value,
+            ])
+            ->assertRedirect(route('reception.day', ['date' => $date]))
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame(AppointmentStatus::CheckedIn, $appointment->fresh()->status);
+        $this->assertSame(0, \App\Models\OperationalEvent::query()->where('subject_id', $appointment->id)->where('event_type', 'appointment_cancelled')->count());
+
+        app(\App\Actions\Reception\RemoveFromQueue::class)->handle($checkIn['queue'], $user);
+        $this->assertSame(AppointmentStatus::CheckedIn, $appointment->fresh()->status);
+
+        $this->post(route('appointments.cancel', $appointment), [
+            'cancellation_reason' => \App\Enums\CancellationReason::PatientRequest->value,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
+    }
+
     public function test_receptionist_primary_nav_keeps_daily_path_and_moves_catalog_to_management(): void
     {
         $this->signIn(UserRole::Receptionist);

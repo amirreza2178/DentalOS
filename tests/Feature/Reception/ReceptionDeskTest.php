@@ -95,7 +95,7 @@ class ReceptionDeskTest extends TestCase
         $clinic = $this->makeClinic();
         $appointment = $this->reserveAt($clinic, '08:00');
         $receptionist = $this->signIn(UserRole::Receptionist);
-        app(CancelAppointment::class)->cancel($appointment, reason: \App\Enums\CancellationReason::PatientRequest);
+        app(CancelAppointment::class)->cancel($appointment, $receptionist, \App\Enums\CancellationReason::PatientRequest);
 
         try {
             app(CheckInAppointment::class)->handle($appointment->fresh(), $receptionist);

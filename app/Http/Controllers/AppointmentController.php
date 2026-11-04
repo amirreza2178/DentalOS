@@ -13,9 +13,12 @@ use App\Enums\FollowUpAuthorization;
 use App\Enums\PatientStatus;
 use App\Enums\ResourceType;
 use App\Enums\UserRole;
+use App\Actions\Scheduling\CancelAppointmentResult;
+use App\Exceptions\Reception\ReceptionConflictException;
 use App\Exceptions\Scheduling\FollowUpConfirmationRequiredException;
 use App\Exceptions\Scheduling\InvalidAppointmentTransitionException;
 use App\Exceptions\Scheduling\SlotUnavailableException;
+use Illuminate\Auth\Access\AuthorizationException;
 use App\Http\Requests\CancelAppointmentRequest;
 use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
@@ -134,28 +137,34 @@ class AppointmentController extends Controller
         CancelAppointment $cancel,
     ): RedirectResponse {
         try {
-            $cancel->cancel(
+            $result = $cancel->cancel(
                 $appointment,
                 $request->user(),
                 CancellationReason::from($request->validated('cancellation_reason')),
                 $request->validated('cancellation_note'),
             );
-        } catch (InvalidAppointmentTransitionException $exception) {
+        } catch (AuthorizationException $exception) {
+            abort(403, $exception->getMessage());
+        } catch (InvalidAppointmentTransitionException|ReceptionConflictException $exception) {
             return back()->withErrors(['status' => $exception->getMessage()]);
         }
+
+        $message = $result->outcome === CancelAppointmentResult::OUTCOME_CANCELLED
+            ? 'نوبت لغو شد و منابعش برای رزرو بعدی آزاد شد.'
+            : 'این نوبت پیش‌تر لغو شده بود؛ دلیل ثبت‌شدهٔ قبلی تغییر نکرد.';
 
         if ($request->string('return_to')->toString() === 'reception.day') {
             $date = trim($request->string('return_date')->toString());
 
             return redirect()
                 ->route('reception.day', array_filter(['date' => $date !== '' ? $date : null]))
-                ->with('status', 'نوبت لغو شد و منابعش برای رزرو بعدی آزاد شد.')
+                ->with('status', $message)
                 ->withFragment('day-appointments-heading');
         }
 
         return redirect()
-            ->route('appointments.show', $appointment)
-            ->with('status', 'نوبت لغو شد و منابعش برای رزرو بعدی آزاد شد.');
+            ->route('appointments.show', $result->appointment)
+            ->with('status', $message);
     }
 
     public function reschedule(Request $request, Appointment $appointment, AvailabilityService $availability, JalaliCalendar $calendar): View

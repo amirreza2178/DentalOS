@@ -43,6 +43,7 @@ class RemoveFromQueue
             $entry->completed_at = $now;
             $entry->save();
 
+            // Appointment stays checked_in — historical check-in must remain true.
             if ($visit->status->isActive() && $visit->status->canTransitionTo(VisitStatus::Cancelled)) {
                 $visit->status = VisitStatus::Cancelled;
                 $visit->completed_at = $now;
@@ -52,7 +53,7 @@ class RemoveFromQueue
 
             $this->events->record(OperationalEventType::QueueEntryRemoved, $entry, $actor, $fromQueue, QueueStatus::Removed->value);
 
-            return $entry->fresh(['visit.patient']);
+            return $entry->fresh(['visit.patient', 'visit.appointment']);
         });
     }
 }
