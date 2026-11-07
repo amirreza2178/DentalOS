@@ -42,17 +42,9 @@ DB_DATABASE=dental_os_demo
    - Reception: `demo.reception@dentalos.demo`
    - Orthodontist: `demo.ortho@dentalos.demo`
 
-### Known blocker (reconfirmed 2026-11-07 — Day 12.1)
+### Status (2026-11-07)
 
-Probe as `dental_os_app@localhost` on `127.0.0.1`:
-
-| Check | Result |
-|-------|--------|
-| `SHOW DATABASES LIKE 'dental_os%'` | only `dental_os` (no `dental_os_demo`) |
-| `USE dental_os_demo` | **1044 Access denied** |
-| `CREATE DATABASE … dental_os_demo` | **1044 Access denied** |
-
-Until an authorized MariaDB operator runs step 1, demo seeding stays **BLOCKED**. Do not point seeding at `dental_os`. No privilege escalation was attempted.
+Local demo DB provisioning completed after operator grants. Seed and Browser QA on `dental_os_demo` are **READY**. Do not point seeding at `dental_os`.
 
 ## Five-minute script
 
