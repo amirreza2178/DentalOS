@@ -64,6 +64,26 @@ document.addEventListener('submit', (event) => {
     });
 });
 
+document.addEventListener('change', (event) => {
+    const trigger = event.target.closest('[data-booking-finder-trigger]');
+
+    if (!trigger) {
+        return;
+    }
+
+    const form = trigger.closest('form[data-booking-finder-auto]');
+
+    if (!form || form.dataset.submitting === '1') {
+        return;
+    }
+
+    if (!form.querySelector('input[name="patient_id"]')?.value) {
+        return;
+    }
+
+    form.requestSubmit();
+});
+
 (() => {
     const seconds = Number(document.body?.dataset?.softRefresh || 0);
 

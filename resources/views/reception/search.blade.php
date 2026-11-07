@@ -26,7 +26,10 @@
                             <h2 class="text-sm font-semibold">{{ $patient->fullName() }}</h2>
                             <p class="mt-1 text-xs text-slate-500">{{ $patient->code }}@if($patient->mobile) · {{ $patient->mobile }}@endif</p>
                         </div>
-                        <a href="{{ route('patients.show', $patient) }}" class="text-sm text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">پرونده</a>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="{{ route('appointments.create', ['patient_id' => $patient->id]) }}" class="text-sm font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">نوبت جدید</a>
+                            <a href="{{ route('patients.show', $patient) }}" class="text-sm text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">پرونده</a>
+                        </div>
                     </div>
                     @if ($dayAppointments->isEmpty())
                         <p class="mt-3 text-sm text-slate-500">نوبتی برای این تاریخ ندارد.</p>
@@ -39,7 +42,7 @@
                                         <span class="text-slate-600"> · {{ $appointment->status->label() }}</span>
                                     </div>
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed && ! $appointment->visit)
-                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
+                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}" data-booking-submit>
                                             @csrf
                                             <button type="submit" class="rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">چک‌این</button>
                                         </form>

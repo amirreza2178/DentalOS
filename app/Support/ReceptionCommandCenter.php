@@ -106,8 +106,10 @@ final class ReceptionCommandCenter
 
         $pendingOnline = collect();
         $pendingOnlineAllCount = 0;
+        $pendingOnlineScopedCount = 0;
         $actionableFollowUps = collect();
         $followUpAllCount = 0;
+        $followUpScopedCount = 0;
         $alerts = collect();
 
         if ($canOperate) {
@@ -116,8 +118,7 @@ final class ReceptionCommandCenter
                 ->where('status', AppointmentStatus::PendingApproval->value)
                 ->count();
 
-            $pendingOnline = Appointment::query()
-                ->with(['patient:id,first_name,last_name,code,mobile', 'treatmentService:id,name'])
+            $pendingOnlineScopedQuery = Appointment::query()
                 ->where('source', AppointmentSource::Online->value)
                 ->where('status', AppointmentStatus::PendingApproval->value)
                 ->when(
@@ -125,7 +126,12 @@ final class ReceptionCommandCenter
                     fn ($query) => $query
                         ->where('starts_at', '>=', $dayStart)
                         ->where('starts_at', '<', $dayEnd),
-                )
+                );
+
+            $pendingOnlineScopedCount = (clone $pendingOnlineScopedQuery)->count();
+
+            $pendingOnline = (clone $pendingOnlineScopedQuery)
+                ->with(['patient:id,first_name,last_name,code,mobile', 'treatmentService:id,name'])
                 ->orderBy('starts_at')
                 ->limit(8)
                 ->get();
@@ -142,8 +148,7 @@ final class ReceptionCommandCenter
              | Focus scope keeps overdue + windows overlapping the selected ClinicDay.
              | Independent follow-ups for the same patient/service stay separate.
              */
-            $actionableFollowUps = FollowUp::query()
-                ->with(['patient:id,first_name,last_name,code', 'treatmentService:id,name'])
+            $followUpScopedQuery = FollowUp::query()
                 ->whereIn('status', [
                     FollowUpStatus::Proposed->value,
                     FollowUpStatus::OfferedToPatient->value,
@@ -160,7 +165,12 @@ final class ReceptionCommandCenter
                             })
                             ->orWhereDate('proposed_window_end', '<', $gregorian);
                     }),
-                )
+                );
+
+            $followUpScopedCount = (clone $followUpScopedQuery)->count();
+
+            $actionableFollowUps = (clone $followUpScopedQuery)
+                ->with(['patient:id,first_name,last_name,code', 'treatmentService:id,name'])
                 ->orderBy('proposed_window_end')
                 ->orderBy('proposed_window_start')
                 ->orderBy('id')
@@ -168,11 +178,11 @@ final class ReceptionCommandCenter
                 ->get()
                 ->values();
 
-            if ($pendingOnline->isNotEmpty()) {
+            if ($pendingOnlineScopedCount > 0) {
                 $scopeHint = $onlineScope === 'day' ? ' برای این روز' : '';
                 $alerts->push([
                     'tone' => 'attention',
-                    'label' => $pendingOnline->count().' درخواست آنلاین در انتظار تأیید'.$scopeHint,
+                    'label' => $pendingOnlineScopedCount.' درخواست آنلاین در انتظار تأیید'.$scopeHint,
                     'href' => '#online-heading',
                 ]);
             } elseif ($onlineScope === 'day' && $pendingOnlineAllCount > 0) {
@@ -183,10 +193,10 @@ final class ReceptionCommandCenter
                 ]);
             }
 
-            if ($actionableFollowUps->isNotEmpty()) {
+            if ($followUpScopedCount > 0) {
                 $alerts->push([
                     'tone' => 'neutral',
-                    'label' => $actionableFollowUps->count().' پیگیری نیازمند اقدام پذیرش',
+                    'label' => $followUpScopedCount.' پیگیری نیازمند اقدام پذیرش',
                     'href' => '#followups-heading',
                 ]);
             } elseif ($followUpScope === 'focus' && $followUpAllCount > 0) {
@@ -236,8 +246,10 @@ final class ReceptionCommandCenter
             'canOperate' => $canOperate,
             'onlineScope' => $onlineScope,
             'pendingOnlineAllCount' => $pendingOnlineAllCount,
+            'pendingOnlineScopedCount' => $pendingOnlineScopedCount,
             'followUpScope' => $followUpScope,
             'followUpAllCount' => $followUpAllCount,
+            'followUpScopedCount' => $followUpScopedCount,
             'schedule' => $schedule,
             'cancelledOrRescheduled' => $cancelledOrRescheduled,
             'upcoming' => $upcoming,
@@ -254,8 +266,8 @@ final class ReceptionCommandCenter
                 'waiting' => $waiting->count(),
                 'called' => $called->count(),
                 'in_service' => $inService->count(),
-                'pending_online' => $pendingOnline->count(),
-                'follow_ups' => $actionableFollowUps->count(),
+                'pending_online' => $pendingOnlineScopedCount,
+                'follow_ups' => $followUpScopedCount,
                 'cancelled_rescheduled' => $cancelledOrRescheduled->count(),
             ],
             'refreshedAt' => Carbon::now($clinicDay->timezone()),

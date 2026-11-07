@@ -1,9 +1,10 @@
 <x-management-layout title="جزئیات نوبت">
     <x-page-header title="نوبت {{ $appointment->patient->fullName() }}" description="{{ $appointment->status->label() }} — {{ $appointment->source->label() }}">
+        <a href="{{ route('reception.day') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">میز پذیرش</a>
         <a href="{{ route('appointments.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست</a>
         @can('checkIn', $appointment)
             @if ($appointment->status === App\Enums\AppointmentStatus::Confirmed && ! $appointment->visit)
-                <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
+                <form method="POST" action="{{ route('reception.check-in', $appointment) }}" data-booking-submit>
                     @csrf
                     <button type="submit" class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">چک‌این</button>
                 </form>

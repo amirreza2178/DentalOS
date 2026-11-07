@@ -144,7 +144,7 @@
                                 </div>
                                 <div class="flex flex-wrap gap-2">
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
-                                        <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}">
+                                        <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}" data-booking-submit>
                                             @csrf
                                             <input type="hidden" name="return_to" value="reception.day">
                                             <input type="hidden" name="return_date" value="{{ $date }}">
@@ -152,7 +152,7 @@
                                         </form>
                                     @endif
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed)
-                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
+                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}" data-booking-submit>
                                             @csrf
                                             <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">چک‌این</button>
                                         </form>
@@ -208,7 +208,7 @@
                                 </p>
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
-                                        <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}">
+                                        <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}" data-booking-submit>
                                             @csrf
                                             <input type="hidden" name="return_to" value="reception.day">
                                             <input type="hidden" name="return_date" value="{{ $date }}">
@@ -217,7 +217,7 @@
                                         <a href="{{ route('booking.requests.show', $appointment) }}#reject" class="inline-flex min-h-10 items-center rounded-lg border border-amber-300 bg-amber-50 px-3 text-xs font-medium text-amber-950">رد با دلیل</a>
                                     @endif
                                     @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed && ! $visit)
-                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
+                                        <form method="POST" action="{{ route('reception.check-in', $appointment) }}" data-booking-submit>
                                             @csrf
                                             <button type="submit" class="min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white">چک‌این</button>
                                         </form>
@@ -294,7 +294,7 @@
                                         <td class="px-3 py-3">
                                             <div class="flex flex-col items-stretch gap-2">
                                                 @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::PendingApproval)
-                                                    <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}">
+                                                    <form method="POST" action="{{ route('booking.requests.approve', $appointment) }}" data-booking-submit>
                                                         @csrf
                                                         <input type="hidden" name="return_to" value="reception.day">
                                                         <input type="hidden" name="return_date" value="{{ $date }}">
@@ -303,7 +303,7 @@
                                                     <a href="{{ route('booking.requests.show', $appointment) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">بررسی</a>
                                                 @endif
                                                 @if ($canOperate && $appointment->status === \App\Enums\AppointmentStatus::Confirmed && ! $visit)
-                                                    <form method="POST" action="{{ route('reception.check-in', $appointment) }}">
+                                                    <form method="POST" action="{{ route('reception.check-in', $appointment) }}" data-booking-submit>
                                                         @csrf
                                                         <button type="submit" class="w-full rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">چک‌این</button>
                                                     </form>
@@ -353,7 +353,7 @@
                 <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <h2 id="day-queue-heading" class="text-base font-semibold text-[color:var(--dos-navy)]">صف انتظار</h2>
                     @if ($canOperate)
-                        <form method="POST" action="{{ route('reception.queue.call-next') }}">
+                        <form method="POST" action="{{ route('reception.queue.call-next') }}" data-booking-submit>
                             @csrf
                             <input type="hidden" name="date" value="{{ $date }}">
                             <button type="submit" class="min-h-10 rounded-lg bg-[color:var(--dos-navy)] px-3 text-xs font-semibold text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[color:var(--dos-accent)]">فراخوان بعدی</button>
@@ -387,14 +387,14 @@
                                             </div>
                                             <div class="flex w-full flex-col gap-2 sm:w-auto">
                                                 @if ($canOperate && in_array($entry->status, [\App\Enums\QueueStatus::Waiting, \App\Enums\QueueStatus::Called], true))
-                                                    <form method="POST" action="{{ route('reception.visits.start', $entry->visit) }}">
+                                                    <form method="POST" action="{{ route('reception.visits.start', $entry->visit) }}" data-booking-submit>
                                                         @csrf
                                                         <button type="submit" class="w-full min-h-10 rounded-lg bg-teal-700 px-3 text-xs font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">شروع خدمت</button>
                                                     </form>
                                                 @endif
                                                 @can('complete', $entry->visit)
                                                     @if ($entry->status === \App\Enums\QueueStatus::InService)
-                                                        <form method="POST" action="{{ route('reception.visits.complete', $entry->visit) }}">
+                                                        <form method="POST" action="{{ route('reception.visits.complete', $entry->visit) }}" data-booking-submit>
                                                             @csrf
                                                             <button type="submit" class="w-full min-h-10 rounded-lg border border-slate-300 px-3 text-xs font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">اتمام ویزیت</button>
                                                         </form>
@@ -423,11 +423,11 @@
                         <h2 id="online-heading" class="text-base font-semibold text-[color:var(--dos-navy)]">درخواست‌های آنلاین</h2>
                         <div class="flex flex-wrap items-center gap-3">
                             @if (($onlineScope ?? 'day') === 'day')
-                                <a href="{{ route('reception.day', ['date' => $date, 'online' => 'all']) }}#online-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه روزها@if (($pendingOnlineAllCount ?? 0) > $pendingOnline->count()) ({{ $pendingOnlineAllCount }})@endif</a>
+                                <a href="{{ route('reception.day', ['date' => $date, 'online' => 'all']) }}#online-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه روزها@if (($pendingOnlineAllCount ?? 0) > ($pendingOnlineScopedCount ?? $pendingOnline->count())) ({{ $pendingOnlineAllCount }})@endif</a>
                             @else
                                 <a href="{{ route('reception.day', ['date' => $date]) }}#online-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همین روز</a>
                             @endif
-                            <a href="{{ route('booking.requests.index') }}" class="text-xs font-semibold text-slate-600 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست کامل</a>
+                            <a href="{{ route('booking.requests.index') }}" class="inline-flex min-h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست کامل@if (($pendingOnlineAllCount ?? 0) > 0) ({{ $pendingOnlineAllCount }})@endif</a>
                         </div>
                     </div>
                     <p class="mb-2 text-xs text-slate-500">
@@ -435,6 +435,11 @@
                             نمایش پیش‌فرض: درخواست‌های معلق همین روز جلالی.
                         @else
                             نمایش همه درخواست‌های معلق، صرف‌نظر از روز نوبت.
+                        @endif
+                        @if (($pendingOnlineScopedCount ?? 0) > $pendingOnline->count())
+                            <span class="font-semibold text-amber-900"> نمایش {{ $pendingOnline->count() }} از {{ $pendingOnlineScopedCount }}؛ {{ $pendingOnlineScopedCount - $pendingOnline->count() }} مورد دیگر در فهرست کامل.</span>
+                        @elseif (($pendingOnlineScopedCount ?? 0) > 0)
+                            <span class="font-medium text-slate-700"> جمع این نما: {{ $pendingOnlineScopedCount }}.</span>
                         @endif
                     </p>
                     @if ($pendingOnline->isEmpty())
@@ -484,11 +489,11 @@
                         <h2 id="followups-heading" class="text-base font-semibold text-[color:var(--dos-navy)]">پیگیری‌های نیازمند اقدام</h2>
                         <div class="flex flex-wrap items-center gap-3">
                             @if (($followUpScope ?? 'focus') === 'focus')
-                                <a href="{{ route('reception.day', array_filter(['date' => $date, 'online' => ($onlineScope ?? 'day') === 'all' ? 'all' : null, 'followups' => 'all'])) }}#followups-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه پیگیری‌ها@if (($followUpAllCount ?? 0) > $actionableFollowUps->count()) ({{ $followUpAllCount }})@endif</a>
+                                <a href="{{ route('reception.day', array_filter(['date' => $date, 'online' => ($onlineScope ?? 'day') === 'all' ? 'all' : null, 'followups' => 'all'])) }}#followups-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">همه پیگیری‌ها@if (($followUpAllCount ?? 0) > ($followUpScopedCount ?? $actionableFollowUps->count())) ({{ $followUpAllCount }})@endif</a>
                             @else
                                 <a href="{{ route('reception.day', array_filter(['date' => $date, 'online' => ($onlineScope ?? 'day') === 'all' ? 'all' : null])) }}#followups-heading" class="text-xs font-semibold text-teal-800 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">تمرکز امروز</a>
                             @endif
-                            <a href="{{ route('clinical.follow-ups.index', ['actionable' => 1]) }}" class="text-xs font-semibold text-slate-600 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست کامل</a>
+                            <a href="{{ route('clinical.follow-ups.index', ['actionable' => 1]) }}" class="inline-flex min-h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700">فهرست کامل@if (($followUpAllCount ?? 0) > 0) ({{ $followUpAllCount }})@endif</a>
                         </div>
                     </div>
                     <p class="mb-2 text-xs text-slate-500">
@@ -496,6 +501,11 @@
                             نمایش: هم‌پوشانی با روز انتخاب‌شده + پیگیری‌های سررسیدگذشته (overdue). اقدام‌های مستقل ادغام نمی‌شوند.
                         @else
                             نمایش همه پیگیری‌های قابل اقدام، صرف‌نظر از پنجره پیشنهادی.
+                        @endif
+                        @if (($followUpScopedCount ?? 0) > $actionableFollowUps->count())
+                            <span class="font-semibold text-amber-900"> نمایش {{ $actionableFollowUps->count() }} از {{ $followUpScopedCount }}؛ {{ $followUpScopedCount - $actionableFollowUps->count() }} مورد دیگر در فهرست کامل.</span>
+                        @elseif (($followUpScopedCount ?? 0) > 0)
+                            <span class="font-medium text-slate-700"> جمع این نما: {{ $followUpScopedCount }}.</span>
                         @endif
                     </p>
                     @if ($actionableFollowUps->isEmpty())

@@ -83,6 +83,11 @@ class AppointmentController extends Controller
     {
         $this->authorize('create', Appointment::class);
 
+        if ($request->boolean('change_patient')) {
+            $request->request->remove('patient_id');
+            $request->query->remove('patient_id');
+        }
+
         return view('appointments.create', $this->bookingForm($request, $availability, $calendar));
     }
 
@@ -98,7 +103,7 @@ class AppointmentController extends Controller
 
         return redirect()
             ->route('appointments.show', $appointment)
-            ->with('status', 'نوبت ثبت شد.');
+            ->with('status', 'نوبت ثبت شد. منابع طبق AvailabilityService رزرو شدند.');
     }
 
     public function show(Appointment $appointment, JalaliCalendar $calendar): View
@@ -175,6 +180,10 @@ class AppointmentController extends Controller
             $request->merge(['service_id' => $appointment->treatment_service_id]);
         }
 
+        if (! $request->filled('date') && ! $request->filled('appointment_date')) {
+            $request->merge(['date' => $calendar->formatDate($appointment->starts_at)]);
+        }
+
         return view('appointments.reschedule', array_merge(
             $this->bookingForm($request, $availability, $calendar, $appointment->patient_id),
             ['appointment' => $appointment->load('patient', 'treatmentService')],
@@ -214,6 +223,19 @@ class AppointmentController extends Controller
      */
     private function bookingForm(Request $request, AvailabilityService $availability, JalaliCalendar $calendar, ?int $lockedPatientId = null): array
     {
+        // Conflict / validation recovery posts treatment_service_id + appointment_date;
+        // map those aliases so the receptionist does not lose service/date/slots.
+        if (! $request->filled('service_id') && $request->filled('treatment_service_id')) {
+            $request->merge(['service_id' => $request->input('treatment_service_id')]);
+        }
+        if (! $request->filled('date') && $request->filled('appointment_date')) {
+            $request->merge(['date' => $request->input('appointment_date')]);
+        }
+        if (! $request->filled('time') && $request->filled('appointment_time')) {
+            $rawTime = (string) $request->input('appointment_time');
+            $request->merge(['time' => strlen($rawTime) >= 5 ? substr($rawTime, 0, 5) : $rawTime]);
+        }
+
         $term = trim($request->string('q')->toString());
         $patientId = $lockedPatientId ?? ($request->integer('patient_id') ?: null);
         $followUpId = $request->integer('follow_up_id') ?: null;
@@ -229,6 +251,13 @@ class AppointmentController extends Controller
 
         $serviceId = $request->integer('service_id') ?: null;
         $dateInput = trim($request->string('date')->toString());
+
+        // Known patient + no date → default clinic "today" so slots appear in one hop.
+        if ($patientId !== null && $dateInput === '' && $lockedPatientId === null) {
+            $dateInput = $calendar->formatDate(now(config('app.timezone')));
+            $request->merge(['date' => $dateInput]);
+        }
+
         $timeInput = trim($request->string('time')->toString());
         $gregorian = $this->gregorianDate($dateInput, $calendar);
         $dateError = $dateInput !== '' && $gregorian === null ? 'تاریخ را با قالب جلالی صحیح وارد کنید.' : null;

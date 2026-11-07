@@ -1,4 +1,17 @@
-<form method="POST" action="{{ $action }}" class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+@php
+    $emphasize = $emphasize ?? false;
+@endphp
+<form
+    method="POST"
+    action="{{ $action }}"
+    data-booking-submit
+    id="{{ ($emphasize ?? false) ? 'slot-confirm' : null }}"
+    @class([
+        'space-y-3 rounded-2xl border bg-white p-4',
+        'border-teal-600 shadow-sm ring-1 ring-teal-700/20' => $emphasize,
+        'border-slate-200' => ! $emphasize,
+    ])
+>
     @csrf
     <input type="hidden" name="patient_id" value="{{ $patient->id }}">
     <input type="hidden" name="treatment_service_id" value="{{ $service->id }}">
@@ -14,7 +27,7 @@
         @if ($slot->specialistIds !== [])
             <label class="block space-y-1" for="specialist-{{ $prefix }}">
                 <span class="text-sm font-medium">متخصص</span>
-                <select id="specialist-{{ $prefix }}" name="specialist_id" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                <select id="specialist-{{ $prefix }}" name="specialist_id" required class="w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
                     @foreach ($slot->specialistIds as $id)
                         <option value="{{ $id }}">{{ $people[$id]->name ?? 'متخصص' }}</option>
                     @endforeach
@@ -25,7 +38,7 @@
             @for ($index = 0; $index < $service->required_clinical_staff_count; $index++)
                 <label class="block space-y-1" for="staff-{{ $prefix }}-{{ $index }}">
                     <span class="text-sm font-medium">کادر بالینی {{ $index + 1 }}</span>
-                    <select id="staff-{{ $prefix }}-{{ $index }}" name="clinical_staff_ids[]" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                    <select id="staff-{{ $prefix }}-{{ $index }}" name="clinical_staff_ids[]" required class="w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
                         @foreach ($slot->clinicalStaffIds as $id)
                             <option value="{{ $id }}" @selected($loop->index === $index)>{{ $people[$id]->name ?? 'کادر بالینی' }}</option>
                         @endforeach
@@ -36,7 +49,7 @@
         @if ($slot->chairIds !== [])
             <label class="block space-y-1" for="chair-{{ $prefix }}">
                 <span class="text-sm font-medium">یونیت</span>
-                <select id="chair-{{ $prefix }}" name="chair_id" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                <select id="chair-{{ $prefix }}" name="chair_id" required class="w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
                     @foreach ($slot->chairIds as $id)
                         <option value="{{ $id }}">{{ $chairs[$id]->name ?? 'یونیت' }}</option>
                     @endforeach
@@ -46,9 +59,9 @@
         <div class="md:col-span-2">
             <label class="block space-y-1" for="notes-{{ $prefix }}">
                 <span class="text-sm font-medium">یادداشت پذیرش (غیر بالینی)</span>
-                <input id="notes-{{ $prefix }}" name="patient_notes" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
+                <input id="notes-{{ $prefix }}" name="patient_notes" class="w-full min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30">
             </label>
         </div>
     </div>
-    <button type="submit" class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">ثبت این نوبت</button>
+    <button type="submit" class="min-h-11 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-700">{{ $emphasize ? 'تأیید و ثبت این نوبت' : 'ثبت این نوبت' }}</button>
 </form>

@@ -1,31 +1,26 @@
 # وضعیت جاری DentalOS
 
-آخرین به‌روزرسانی: 2026-11-04  
-فاز: Unified Jalali Calendar — **QA نهایی انجام شد؛ آماده تأیید commit** (هنوز commit/push نشده)
+آخرین به‌روزرسانی: 2026-11-07  
+فاز: Day 12.1 — Demo env unblocking (**NOT READY** — MariaDB grants؛ commit/push نشده)
 
 ---
 
 ## Git
 
-- شاخه: `master` @ `9be98a9` (Day 11 concurrency hardening) + working tree تقویم جلالی
-- جلوتر از `origin/master` به‌اندازه ۲ commit
+- شاخه: `master` @ `92cac52` + working tree Day 12 (uncommitted)
+- هم‌تراز با `origin/master` قبل از این تغییرات
 - بدون secrets در مسیر commit
-- Push انجام نشده
 
 ---
 
-## Day 11 — commit شده (verified)
+## Day 12 — انجام‌شده (uncommitted)
 
-- Hash: `9be98a9` — `feat: day 11 concurrency hardening for cancel, check-in, and races`
-
----
-
-## تقویم جلالی — پس از QA
-
-- کامپوننت مشترک `x-jalali-date-field`
-- `dayStatusesBetween` با batch holiday/shift + catalog cache + short-circuit `hasOpening`
-- a11y: `role=region` + `hidden` روی پنل popover
-- JS parity با جفت‌های شناخته‌شده: OK
+- فشرده‌سازی UX نوبت داخلی/جابه‌جایی (sticky patient، بازیابی conflict، میان‌بر ساعت)
+- شفافیت سقف ۸تایی آنلاین/پیگیری + شمارش باقیمانده + CTA فهرست کامل
+- `data-booking-submit` روی چک‌این و اقدامات پرتکرار میز
+- دستور ایزوله `dentalos:prepare-demo` → فقط `dental_os_demo`
+- اسکریپت دمو: `docs/DAY12-DEMO.md`
+- تست‌های متمرکز Day 12: **12 passed / 55 assertions**
 
 ---
 
@@ -34,14 +29,14 @@
 | منبع | نتیجه |
 |------|--------|
 | `npm run build` | OK |
-| JS Jalali parity (۸ جفت + leap) | OK |
-| `php artisan test` | **121 passed / 7 skipped / 672 assertions** |
-| Browser/device walkthrough | **NOT VERIFIED** |
+| Day 12 feature + safety | **12 passed / 55 assertions** |
+| Browser QA authenticated | **BLOCKED** این نشست (بدون خواندن فایل credential) |
+| `dental_os_demo` seed | **BLOCKED** (Day 12.1 reconfirmed) — فقط `dental_os` دیده می‌شود؛ 1044 روی CREATE/USE دمو |
 
 ---
 
 ## کار بعدی
 
-1. تأیید صریح commit تقویم
-2. Browser checklist (موبایل/دسکتاپ)
-3. (اختیاری) push پس از commit
+1. ایجاد/اعطای دسترسی MariaDB به `dental_os_demo` سپس `php artisan dentalos:prepare-demo --reset --i-understand-demo-reset`
+2. Browser QA احراز هویت‌شده روی دسکتاپ/موبایل با حساب دمو
+3. تأیید صریح commit Day 12 از Product Owner
